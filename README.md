@@ -1,27 +1,24 @@
-# Online Checkers Platform
+# Online Checkers Platform API
 
 ## Project setup
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### Develop script
+- Compiles TypeScript as files are changed
+- Runs the compiled files as they are changed, with debugging  enabled
+- Runs unit tests as files are changed
 ```
-npm run serve
+npm run develop
 ```
 
-### Compiles and minifies for production
+### Build 
 ```
 npm run build
 ```
 
-### Run your unit tests
+### Unit Tests
 ```
 npm run test:unit
-```
-
-### Run your end-to-end tests
-```
-npm run test:e2e:develop     # if already running dev server
-npm run test:e2e:standalone  # if not running dev server
 ```
