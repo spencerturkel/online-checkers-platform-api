@@ -1,4 +1,5 @@
 # Online Checkers Platform API
+![Build Status](https://travis-ci.com/spencerturkel/online-checkers-platform-api.svg?token=gm1zuwtz6yWqd9Rwapxf&branch=master)
 
 ## Project setup
 ```
