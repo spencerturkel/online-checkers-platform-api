@@ -1,0 +1,62 @@
+{
+  "name": "online-checkers-platform-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "debug:node": "nodemon --inspect dist/index.js",
+    "develop": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Jest,Node\" -c \"cyan.bold,yellow.bold,green.bold\" npm:watch:ts npm:watch:test:unit npm:debug:node",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "test:unit": "jest",
+    "watch:node": "nodemon dist/index.js",
+    "watch:test:unit": "jest --watch",
+    "watch:ts": "tsc -w"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^23.1.4",
+    "concurrently": "^4.0.1",
+    "jest": "^23.6.0",
+    "lint-staged": "^7.2.2",
+    "nodemon": "^1.18.4",
+    "prettier": "^1.14.3",
+    "shx": "^0.3.2",
+    "ts-jest": "^23.0.0",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github:spencerturkel/online-checkers-platform-api"
+  },
+  "engines": {
+    "node": "8"
+  },
+  "contributors": [
+    {
+      "name": "Spencer Turkel",
+      "email": "sturkel@mail.usf.edu"
+    },
+    {
+      "name": "Jayesh Patel",
+      "email": "jaypatel2397@gmail.com"
+    },
+    {
+      "name": "Eduardo Nodarse",
+      "email": "eduardn@mail.usf.edu"
+    }
+  ],
+  "license": "MIT",
+  "lint-staged": {
+    "src/**/*.ts": [
+      "tslint -p tsconfig.json",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  },
+  "homepage": "https://github.com/spencerturkel/online-checkers-platform-api"
+}
