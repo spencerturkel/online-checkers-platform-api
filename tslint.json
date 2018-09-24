@@ -17,6 +17,7 @@
     },
     "max-classes-per-file": false,
     "no-any": true,
+    "no-empty": false,
     "no-conditional-assignment": false,
     "no-console": false,
     "no-switch-case-fall-through": true,
