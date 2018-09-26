@@ -1,0 +1,10 @@
+**/*
+
+!.ebextensions
+!.ebextensions/**/*
+
+!dist
+!dist/**/*
+
+!node_modules
+!node_modules/**/*

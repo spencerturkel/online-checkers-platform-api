@@ -11,3 +11,8 @@ node_modules
 
 !src/**/*
 src/**/*.js
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

@@ -5,7 +5,7 @@ before_script:
 - npm run test:unit
 script: npm run build
 before_deploy:
-  - zip -r site.zip dist node_modules >/dev/null
+  - zip -r site.zip dist node_modules .ebextensions >/dev/null
 deploy:
   skip_cleanup: true
   provider: elasticbeanstalk
