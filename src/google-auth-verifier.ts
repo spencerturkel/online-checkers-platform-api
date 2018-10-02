@@ -6,10 +6,15 @@ export class GoogleAuthVerifier {
     this.oauthClient = new OAuth2Client(clientId);
   }
   async verify(idToken: string): Promise<string | null> {
-    const result = await this.oauthClient.verifyIdToken({
-      audience: this.clientId,
-      idToken,
-    });
+    let result;
+    try {
+      result = await this.oauthClient.verifyIdToken({
+        audience: this.clientId,
+        idToken,
+      });
+    } catch (e) {
+      return null;
+    }
 
     if (result == null) {
       console.log('verify failed');
