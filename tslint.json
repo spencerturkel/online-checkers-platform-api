@@ -1,13 +1,8 @@
 {
   "defaultSeverity": "error",
-  "extends": [
-    "tslint:recommended",
-    "tslint-config-prettier"
-  ],
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
   "linterOptions": {
-    "exclude": [
-      "node_modules/**"
-    ]
+    "exclude": ["node_modules/**"]
   },
   "rules": {
     "arrow-parens": false,
@@ -16,6 +11,7 @@
       "options": "never-prefix"
     },
     "max-classes-per-file": false,
+    "member-access": false,
     "no-any": true,
     "no-empty": false,
     "no-conditional-assignment": false,
