@@ -13,7 +13,7 @@ const googleAuthVerifier = new GoogleAuthVerifier(
 const users = new Map<string, { id: string }>();
 
 const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  if (req.session && req.session.userId) {
+  if (req.session && req.session.userId && req.xhr) {
     next();
   } else {
     res.sendStatus(403);
@@ -30,6 +30,8 @@ if (runningInProduction) {
 
 server.use(
   cors({
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'X-Requested-With'],
     origin: [
       'http://localhost:8080', // front-end development URL
       'https://onlinecheckersplatform.com',
@@ -58,7 +60,6 @@ server.use(
 
 server.post('/auth/google', async (req, res) => {
   if (typeof req.body.token !== 'string') {
-    console.log(typeof req.body, req.body);
     return res.sendStatus(400);
   }
 
@@ -77,7 +78,7 @@ server.post('/auth/google', async (req, res) => {
   res.sendStatus(201);
 });
 
-server.delete('/auth', (req, res, next) => {
+server.delete('/auth', authenticate, (req, res, next) => {
   req.session!.destroy(err => {
     if (err) {
       return next(err);
