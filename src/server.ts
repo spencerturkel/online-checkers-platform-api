@@ -102,6 +102,24 @@ server.get('/test', (req, res) => {
   console.log(req.query);
 });
 
+server.post('/start-game', (req, res) => {
+  const body = req.body;
+  console.log(body);
+  if (!body) {
+    res.sendStatus(400);
+    return;
+  }
+  if (!body.name) {
+    res.sendStatus(400);
+    return;
+  }
+  if (!body.email) {
+    res.sendStatus(400);
+    return;
+  }
+  res.sendStatus(200);
+});
+
 server.all('*', (req, res) => res.send('Hello, world'));
 
 export default server;
