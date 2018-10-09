@@ -8,7 +8,9 @@
       "type": "typescript",
       "tsconfig": "tsconfig.json",
       "option": "watch",
-      "problemMatcher": ["$tsc-watch"],
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
       "group": "build"
     },
     {
@@ -26,7 +28,11 @@
     },
     {
       "label": "Develop",
-      "dependsOn": ["Build", "Run"]
+      "dependsOn": [
+        "Build",
+        "Run"
+      ],
+      "problemMatcher": []
     }
   ]
 }
