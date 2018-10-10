@@ -102,7 +102,7 @@ server.get('/test', (req, res) => {
   console.log(req.query);
 });
 
-server.post('/start-game', (req, res) => {
+/*server.post('/start-game', (req, res) => {
   const body = req.body;
   console.log(body);
   if (!body) {
@@ -118,6 +118,15 @@ server.post('/start-game', (req, res) => {
     return;
   }
   res.sendStatus(200);
+});
+*/
+//
+let waitingUsers: string | null = null;
+server.post('/start-game', authenticate, (req, res) => {
+  if (waitingUsers === null) {
+    waitingUsers = req.session!.userID;
+  } else {
+  }
 });
 
 server.all('*', (req, res) => res.send('Hello, world'));
