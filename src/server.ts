@@ -121,11 +121,25 @@ server.get('/test', (req, res) => {
 });
 */
 //
-let waitingUsers: string | null = null;
+let waitingUser: string | null = null;
+
+interface GameState {
+  playerOneId: string;
+  playerTwoId: string;
+  letter: string;
+}
+
+let games: { [ids: string]: GameState } = {};
+
 server.post('/start-game', authenticate, (req, res) => {
-  if (waitingUsers === null) {
-    waitingUsers = req.session!.userID;
+  if (waitingUser === null) {
+    waitingUser = req.session!.userID;
   } else {
+    const playerOneId = waitingUser;
+    const playerTwoId = req.session!.id; // TODO: handle same user as waiting
+    const letter = 'A'; // TODO: make this a random letter
+
+    games[playerOneId + playerTwoId] = { playerOneId, playerTwoId, letter };
   }
 });
 
