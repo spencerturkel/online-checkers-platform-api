@@ -4,7 +4,7 @@ import session from 'express-session';
 import helmet from 'helmet';
 import passport from 'passport';
 
-import { GoogleAuthVerifier } from './google-auth-verifier';
+import { GoogleAuthVerifier } from './authentication/google-auth-verifier';
 
 const googleAuthVerifier = new GoogleAuthVerifier(
   '395197363727-6iflms73n0evhotdbm9379dbkqipeupr.apps.googleusercontent.com',
@@ -24,6 +24,8 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
 const server = express();
 
+server.set('etag', false);
+
 if (runningInProduction) {
   server.set('trust proxy', 1); // trusts the NGINX proxy on Elastic Beanstalk
 }
@@ -39,6 +41,7 @@ server.use(
   }),
 );
 server.use(helmet());
+server.use(helmet.noCache());
 server.use(express.json());
 server.use(passport.initialize());
 
@@ -102,25 +105,6 @@ server.get('/test', (req, res) => {
   console.log(req.query);
 });
 
-/*server.post('/start-game', (req, res) => {
-  const body = req.body;
-  console.log(body);
-  if (!body) {
-    res.sendStatus(400);
-    return;
-  }
-  if (!body.name) {
-    res.sendStatus(400);
-    return;
-  }
-  if (!body.email) {
-    res.sendStatus(400);
-    return;
-  }
-  res.sendStatus(200);
-});
-*/
-//
 let waitingUser: string | null = null;
 
 interface GameState {
@@ -129,7 +113,7 @@ interface GameState {
   letter: string;
 }
 
-let games: { [ids: string]: GameState } = {};
+const games: { [ids: string]: GameState } = {};
 
 server.post('/start-game', authenticate, (req, res) => {
   if (waitingUser === null) {
