@@ -1,0 +1,9 @@
+
+
+# @name local
+POST {{host}}/auth/local
+###
+DELETE {{host}}/auth/
+###
+DELETE {{host}}/auth/
+Cookie: {{local.response.headers.Set-Cookie}}

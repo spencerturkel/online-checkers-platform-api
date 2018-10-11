@@ -14,14 +14,12 @@
     "watch:ts": "tsc -w"
   },
   "dependencies": {
-    "@types/passport": "^0.4.6",
     "compression": "^1.7.3",
     "cors": "^2.8.4",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "google-auth-library": "^2.0.0",
-    "helmet": "^3.13.0",
-    "passport": "^0.4.0"
+    "helmet": "^3.13.0"
   },
   "devDependencies": {
     "@types/compression": "0.0.36",
