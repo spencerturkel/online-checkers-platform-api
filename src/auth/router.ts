@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { GoogleAuthVerifier } from './google-auth-verifier';
 import { authenticate } from './middleware';
+import { users } from './users';
 
 export const authRouter = Router();
 
@@ -9,24 +10,22 @@ const googleAuthVerifier = new GoogleAuthVerifier(
   '395197363727-6iflms73n0evhotdbm9379dbkqipeupr.apps.googleusercontent.com',
 );
 
-const users = new Map<string, { id: string }>();
-
 authRouter.post('/auth/google', async (req, res) => {
   if (typeof req.body.token !== 'string') {
     return res.sendStatus(400);
   }
 
-  const userId = await googleAuthVerifier.verify(req.body.token);
+  const payload = await googleAuthVerifier.verify(req.body.token);
 
-  if (!userId) {
+  if (!payload) {
     return res.sendStatus(401);
   }
 
-  const user = { id: userId };
+  const user = { id: payload.sub, name: payload.name! };
 
-  users.set(userId, user);
+  users.set(user.id, user);
 
-  req.session!.userId = userId;
+  req.session!.userId = user.id;
 
   res.sendStatus(201);
 });

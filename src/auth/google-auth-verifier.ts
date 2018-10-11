@@ -1,11 +1,14 @@
 import { OAuth2Client } from 'google-auth-library';
+import { TokenPayload } from 'google-auth-library/build/src/auth/loginticket';
 
 export class GoogleAuthVerifier {
   private readonly oauthClient: OAuth2Client;
+
   constructor(private readonly clientId: string) {
     this.oauthClient = new OAuth2Client(clientId);
   }
-  async verify(idToken: string): Promise<string | null> {
+
+  async verify(idToken: string): Promise<TokenPayload | null> {
     let result;
     try {
       result = await this.oauthClient.verifyIdToken({
@@ -28,6 +31,6 @@ export class GoogleAuthVerifier {
       return null;
     }
 
-    return payload.sub;
+    return payload;
   }
 }
