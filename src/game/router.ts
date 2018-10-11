@@ -75,7 +75,7 @@ gameRouter.get('/waiting', (req, res) => {
 });
 
 gameRouter.post('/guess', (req, res) => {
-  if (!req.body || !req.body.digit) {
+  if (!req.body || !Object.keys(req.body).includes('digit')) {
     res.sendStatus(400);
     return;
   }

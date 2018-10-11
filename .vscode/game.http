@@ -55,15 +55,14 @@ GET {{host}}/game/waiting
 ###
 
 # @name guessOne
-POST {{host}}/game/guess
+POST {host}/game/guess
 {{playerOneAuth}}
 
 {"digit": 8}
-
 ###
 
 # @name guessTwo
 POST {{host}}/game/guess
 {{playerTwoAuth}}
 
-{"digit": 1}
+{"digit": 7}
