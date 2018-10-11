@@ -1,8 +1,8 @@
 language: node_js
 node_js: 8
 before_script:
-- npm run lint
-- npm run test:unit
+  - npm run lint
+  - npm run test:unit
 script: npm run build
 before_deploy:
   - zip -r site.zip dist node_modules .ebextensions >/dev/null
@@ -14,7 +14,7 @@ deploy:
     secure: hjZKbVnXrJffoRdv0YsJbswozG/50JZM/j9jMGqxDynrFm+p+8ibxMfMcaE9OC35KPIsdl73RwKDUfvjqkT6Nmu8BI03STLp4s2lyBmsp9uY8cw0prIKKiPwfk91BdOD8N646j4QmmioOIAiKp6GOY55fZUmpN4En/y85Ulu7z9DVCl0yDvdNLeducYb6cSJREjinMIKL5Vyv8eo83QLYJK1NCUgBVDXlwUJC1+a/4DbYWLEDqzu5F6gNhzDVnJlLZOoEUBTtkEBsIwFPyRn8d1Fbzgi76j+Z9v3+1gr0y+zhzE+O43CCnYcM17Crgoq0yQ62EtK95pYRqqeLlh6ZLOu6vRUOqq+sjdKfU6t3l53KvGaFjk2bazwkP5OZS+AsFSwc6H5cObMnw21XKgReB79AcT1zti8yig2O+KCp+A5jlT9V4/OeIfJmvq6wKtO1KCaH7hyEeSbm7MAe0XHYmzSX/wLhfwncgej9jgtne4dmlPqtTRd2eCAiXQFfgpEmuJsJJXRqM3hYz1jM3t+jzkxrYltY0Cn3b/nGujvbCVm2Ae6Ocxa2xVA6rSxXZ67x/cvP4NUvCmfH8pAKXYumOIv5ymiItpgp2gEFYDGBihbJB6SgXQnR4lMYCnK97zior6khrwNMynCIoKWdzBRNl/nKEf3G/cUbvKCb3OzDbs=
   region: us-east-2
   app: online-checkers-platform-api
-  env: OnlineCheckersPlatformApi-env
+  env: API-OnlineCheckersPlatform
   bucket_name: onlinecheckersplatform-bucket
   zip_file: site.zip
   on:
