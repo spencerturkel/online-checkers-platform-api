@@ -2,7 +2,6 @@ import cors from 'cors';
 import express, { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
-import passport from 'passport';
 
 import { GoogleAuthVerifier } from './authentication/google-auth-verifier';
 
@@ -43,7 +42,6 @@ server.use(
 server.use(helmet());
 server.use(helmet.noCache());
 server.use(express.json());
-server.use(passport.initialize());
 
 server.use(
   session({
