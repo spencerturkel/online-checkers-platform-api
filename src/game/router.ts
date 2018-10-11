@@ -1,13 +1,13 @@
 import { Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
-import { users } from '../auth/users';
+import { users } from '../users';
 
 export const gameRouter = Router();
 
 gameRouter.use(authenticate);
 
-let waitingUser: string | null = null;
+let waitingUserId: string | null = null;
 
 interface GameState {
   digit: number;
@@ -19,32 +19,32 @@ interface GameState {
 const games: { [gameId: number]: GameState } = {};
 let nextGameId = 0;
 
-gameRouter.post('/start', authenticate, (req, res) => {
+gameRouter.post('/start', (req, res) => {
   const currentUserId = req.session!.userId;
-  if (waitingUser === null) {
-    waitingUser = currentUserId;
+  if (waitingUserId === null) {
+    waitingUserId = currentUserId;
     res.sendStatus(204);
     return;
   }
 
-  if (waitingUser === currentUserId) {
+  if (waitingUserId === currentUserId) {
     res.sendStatus(400);
     return;
   }
 
-  const id = nextGameId++;
+  const gameId = nextGameId++;
 
-  games[id] = {
+  games[gameId] = {
     digit: Math.floor(Math.random() * 10),
-    id,
+    id: gameId,
     playerOneId: currentUserId,
-    playerTwoId: waitingUser,
+    playerTwoId: waitingUserId,
   };
 
-  res.json({ id });
+  res.json({ gameId, opponent: users.get(waitingUserId)!.name });
 });
 
-gameRouter.get('/waiting', authenticate, (req, res) => {
+gameRouter.get('/waiting', (req, res) => {
   const userId = req.session!.userId;
   const game = Object.values(games).find(
     x => x.playerOneId === userId || x.playerTwoId === userId,
@@ -58,5 +58,39 @@ gameRouter.get('/waiting', authenticate, (req, res) => {
   const opponent = users.get(
     userId === game.playerOneId ? game.playerTwoId : game.playerOneId,
   )!.name;
-  res.send({ gameId: game.id, opponent });
+
+  res.json({ gameId: game.id, opponent });
+});
+
+gameRouter.post('/guess', (req, res) => {
+  if (!req.body || !req.body.digit) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const digit = Number(req.body.digit);
+
+  if (isNaN(digit)) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const userId = req.session!.userId;
+  const game = Object.values(games).find(
+    x => x.playerOneId === userId || x.playerTwoId === userId,
+  );
+
+  if (game == null) {
+    res.sendStatus(404);
+    return;
+  }
+
+  if (digit !== game.digit) {
+    res.json({ correct: false });
+    return;
+  }
+
+  delete games[game.id];
+  users.get(userId)!.wins++;
+  res.json({ correct: true });
 });

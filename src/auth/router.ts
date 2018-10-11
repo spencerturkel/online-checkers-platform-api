@@ -1,8 +1,8 @@
 import { Router } from 'express';
 
+import { users } from '../users';
 import { GoogleAuthVerifier } from './google-auth-verifier';
 import { authenticate } from './middleware';
-import { users } from './users';
 
 export const authRouter = Router();
 
@@ -21,9 +21,11 @@ authRouter.post('/auth/google', async (req, res) => {
     return res.sendStatus(401);
   }
 
-  const user = { id: payload.sub, name: payload.name! };
+  const user = { id: payload.sub, name: payload.name!, wins: 0 };
 
-  users.set(user.id, user);
+  if (!users.get(user.id)) {
+    users.set(user.id, user);
+  }
 
   req.session!.userId = user.id;
 

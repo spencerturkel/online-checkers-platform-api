@@ -5,6 +5,7 @@ import helmet from 'helmet';
 
 import { authRouter } from './auth/router';
 import { gameRouter } from './game/router';
+import { userRouter } from './users';
 
 const runningInProduction = process.env.NODE_ENV === 'production';
 
@@ -48,6 +49,7 @@ server.use(
 
 server.use(authRouter);
 server.use(gameRouter);
+server.use(userRouter);
 
 server.all('*', (req, res) => res.send('Hello, world'));
 
