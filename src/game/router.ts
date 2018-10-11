@@ -21,6 +21,16 @@ let nextGameId = 0;
 
 gameRouter.post('/start', (req, res) => {
   const currentUserId = req.session!.userId;
+
+  if (
+    Object.values(games).some(x =>
+      [x.playerOneId, x.playerTwoId].includes(currentUserId),
+    )
+  ) {
+    res.sendStatus(400);
+    return;
+  }
+
   if (waitingUserId === null) {
     waitingUserId = currentUserId;
     res.sendStatus(204);
@@ -42,6 +52,8 @@ gameRouter.post('/start', (req, res) => {
   };
 
   res.json({ gameId, opponent: users.get(waitingUserId)!.name });
+
+  waitingUserId = null;
 });
 
 gameRouter.get('/waiting', (req, res) => {
@@ -59,7 +71,7 @@ gameRouter.get('/waiting', (req, res) => {
     userId === game.playerOneId ? game.playerTwoId : game.playerOneId,
   )!.name;
 
-  res.json({ gameId: game.id, opponent });
+  res.json({ opponent });
 });
 
 gameRouter.post('/guess', (req, res) => {

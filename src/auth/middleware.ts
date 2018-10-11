@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { environment } from '../environment';
 
 export const authenticate = (
   req: Request,
@@ -8,7 +9,7 @@ export const authenticate = (
   if (
     req.session &&
     req.session.userId &&
-    (process.env.NODE_ENV!.toLowerCase() !== 'production' || req.xhr)
+    (!environment.production || req.xhr)
   ) {
     next();
   } else {

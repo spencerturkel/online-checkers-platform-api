@@ -12,8 +12,20 @@ const googleAuthVerifier = new GoogleAuthVerifier(
 );
 
 if (!environment.production) {
+  let nextLocalUserId = 0;
   authRouter.post('/local', (req, res) => {
-    const user = { id: 'local-id', name: 'Local User', wins: 0 };
+    if (req.session && req.session.userId) {
+      res.sendStatus(204);
+      return;
+    }
+
+    const user = {
+      id: `local-id-${nextLocalUserId}`,
+      name: `Local User ${nextLocalUserId}`,
+      wins: 0,
+    };
+
+    ++nextLocalUserId;
 
     if (!users.get(user.id)) {
       users.set(user.id, user);
@@ -25,7 +37,7 @@ if (!environment.production) {
   });
 }
 
-authRouter.post('/auth/google', async (req, res) => {
+authRouter.post('/google', async (req, res) => {
   if (typeof req.body.token !== 'string') {
     return res.sendStatus(400);
   }
@@ -47,7 +59,7 @@ authRouter.post('/auth/google', async (req, res) => {
   res.sendStatus(201);
 });
 
-authRouter.delete('/auth', authenticate, (req, res, next) => {
+authRouter.delete('/', authenticate, (req, res, next) => {
   req.session!.destroy(err => {
     if (err) {
       return next(err);

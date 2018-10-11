@@ -8,7 +8,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "types": ["jest", "node"],
-    "lib": ["es2015", "es2017.object"],
+    "lib": ["es2015", "es2017"],
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],

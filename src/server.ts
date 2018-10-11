@@ -47,10 +47,8 @@ server.use(
   }),
 );
 
-server.use(authRouter);
-server.use(gameRouter);
-server.use(userRouter);
-
-server.all('*', (req, res) => res.send('Hello, world'));
+server.use('/auth', authRouter);
+server.use('/game', gameRouter);
+server.use('/user', userRouter);
 
 export default server;

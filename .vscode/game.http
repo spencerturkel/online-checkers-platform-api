@@ -1,0 +1,69 @@
+# @name playerOne
+POST {{host}}/auth/local
+
+###
+
+@playerOneAuth = Cookie: {{playerOne.response.headers.Set-Cookie}}
+
+GET {{host}}/user/info
+{{playerOneAuth}}
+
+###
+
+DELETE {{host}}/auth
+{{playerOneAuth}}
+
+###
+
+# @name playerTwo
+POST {{host}}/auth/local
+
+###
+@playerTwoAuth = Cookie: {{playerTwo.response.headers.Set-Cookie}}
+
+GET {{host}}/user/info
+{{playerTwoAuth}}
+
+###
+DELETE {{host}}/auth
+{{playerTwoAuth}}
+
+###
+
+# @name startOne
+POST {{host}}/game/start
+{{playerOneAuth}}
+
+###
+
+# @name startTwo
+POST {{host}}/game/start
+{{playerTwoAuth}}
+
+###
+
+# @name waitingOne
+GET {{host}}/game/waiting
+{{playerOneAuth}}
+
+###
+
+# @name waitingTwo
+GET {{host}}/game/waiting
+{{playerTwoAuth}}
+
+###
+
+# @name guessOne
+POST {{host}}/game/guess
+{{playerOneAuth}}
+
+{"digit": 8}
+
+###
+
+# @name guessTwo
+POST {{host}}/game/guess
+{{playerTwoAuth}}
+
+{"digit": 1}
