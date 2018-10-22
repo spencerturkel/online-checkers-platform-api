@@ -55,25 +55,35 @@ GET {{host}}/game/waiting
 ###
 
 # @name moveOne
-POST {host}/game/move
+GET {host}/game/moves/row/1/column/1
 {{playerOneAuth}}
 
-[{"from": {"row":3 ,"col":0},
-"to":{"row":6,"col":2}}]
-
-### 204 
-
+# rows begin at 1 at the bottom; columns begin at 1 at the left
+# 400 if bad coordinates
+# 400 if piece is not yours
+# 200 type Coordinate = { row: number; column: number; }
+# 200 type Tree = { root: Coordinate; branches: Tree[] }
+# 200 type Body = Tree
+# 200 [{"root": {"row": 3, "column": 3}, "branches": [ ]}]
 
 ###
 
 # @name moveTwo
 POST {{host}}/game/move
-{{playerTwoAuth}}
+{{playerOneAuth}}
 
-[{"from": {"row":2 ,"col":0},
-"to":{"row":4,"col":2}}]
+{
+    "from": {"row": 1, "column": 1},
+    "to": {
+        "root": {"row": 3, "column": 3},
+        "path": []
+    }
+}
 
-### 204
-### 400 if wrong player 
-### 200 invalid move 
-### 400 if bad co-ordinates - relative ot bottom left i.e bottom left mkst sqaure is [0,0]
+# rows begin at 1 at the bottom; columns begin at 1 at the left
+# 400 if bad coordinates
+# 400 if piece is not yours
+# 200 type Coordinate = { row: number; column: number; }
+# 200 type Path = Coordinate[]
+# 200 type Body = {"from": Coordinate, "to": {"root": Coordinate; "path": Coordinate[]}}
+# 200 [{"root": {"row": 3, "column": 3}, "branches": [ ]}]
