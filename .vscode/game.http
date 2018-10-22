@@ -54,15 +54,17 @@ GET {{host}}/game/waiting
 
 ###
 
-# @name guessOne
-POST {host}/game/guess
+# @name moveOne
+POST {host}/game/move
 {{playerOneAuth}}
 
-{"digit": 8}
+{"from": {"row":3 ,"col":0},
+"to":{"row":6,"col":2}}
 ###
 
-# @name guessTwo
-POST {{host}}/game/guess
+# @name moveTwo
+POST {{host}}/game/move
 {{playerTwoAuth}}
 
-{"digit": 7}
+{"from": {"row":2 ,"col":0},
+"to":{"row":4,"col":2}}
