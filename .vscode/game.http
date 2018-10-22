@@ -58,13 +58,22 @@ GET {{host}}/game/waiting
 POST {host}/game/move
 {{playerOneAuth}}
 
-{"from": {"row":3 ,"col":0},
-"to":{"row":6,"col":2}}
+[{"from": {"row":3 ,"col":0},
+"to":{"row":6,"col":2}}]
+
+### 204 
+
+
 ###
 
 # @name moveTwo
 POST {{host}}/game/move
 {{playerTwoAuth}}
 
-{"from": {"row":2 ,"col":0},
-"to":{"row":4,"col":2}}
+[{"from": {"row":2 ,"col":0},
+"to":{"row":4,"col":2}}]
+
+### 204
+### 400 if wrong player 
+### 200 invalid move 
+### 400 if bad co-ordinates - relative ot bottom left i.e bottom left mkst sqaure is [0,0]
