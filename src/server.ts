@@ -1,3 +1,4 @@
+import sgMail from '@sendgrid/mail';
 import cors from 'cors';
 import express from 'express';
 import session from 'express-session';
@@ -6,6 +7,8 @@ import helmet from 'helmet';
 import { authRouter } from './auth/router';
 import { gameRouter } from './game/router';
 import { userRouter } from './users';
+
+sgMail.setApiKey(process.env.SENDGRID_KEY!);
 
 const runningInProduction = process.env.NODE_ENV === 'production';
 
@@ -50,5 +53,16 @@ server.use(
 server.use('/auth', authRouter);
 server.use('/game', gameRouter);
 server.use('/user', userRouter);
+
+server.post('/email', async (req, res) => {
+  await sgMail.send({
+    to: req.body.to,
+    from: 'noreply@onlinecheckersplatform.com',
+    subject: req.body.subject,
+    text: req.body.text,
+  });
+
+  res.sendStatus(204);
+});
 
 export default server;

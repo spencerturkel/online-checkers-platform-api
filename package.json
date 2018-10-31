@@ -14,8 +14,10 @@
     "watch:ts": "tsc -w"
   },
   "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
     "compression": "^1.7.3",
     "cors": "^2.8.4",
+    "dotenv": "^6.1.0",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "google-auth-library": "^2.0.0",
