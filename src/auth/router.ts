@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { environment } from '../environment';
-import { users } from '../users';
+import { users } from '../user';
 import { GoogleAuthVerifier } from './google-auth-verifier';
 import { authenticate } from './middleware';
 
@@ -23,6 +23,7 @@ if (!environment.production) {
       id: `local-id-${nextLocalUserId}`,
       name: `Local User ${nextLocalUserId}`,
       wins: 0,
+      losses: 0,
     };
 
     ++nextLocalUserId;
@@ -48,7 +49,7 @@ authRouter.post('/google', async (req, res) => {
     return res.sendStatus(401);
   }
 
-  const user = { id: payload.sub, name: payload.name!, wins: 0 };
+  const user = { id: payload.sub, name: payload.name!, wins: 0, losses: 0 };
 
   if (!users.get(user.id)) {
     users.set(user.id, user);

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
-import { users } from '../users';
+import { users } from '../user';
 
 export const gameRouter = Router();
 

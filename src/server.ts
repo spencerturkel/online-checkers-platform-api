@@ -6,7 +6,7 @@ import helmet from 'helmet';
 
 import { authRouter } from './auth/router';
 import { gameRouter } from './game/router';
-import { userRouter } from './users';
+import { userRouter } from './user';
 
 sgMail.setApiKey(process.env.SENDGRID_KEY!);
 

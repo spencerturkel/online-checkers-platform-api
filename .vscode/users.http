@@ -1,0 +1,12 @@
+# @name auth
+POST {{host}}/auth/local
+
+###
+
+GET {{host}}/user/info
+Cookie: {{auth.response.headers.set-cookie}}
+
+###
+
+GET {{host}}/user/stats
+Cookie: {{auth.response.headers.set-cookie}}
