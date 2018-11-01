@@ -4,6 +4,7 @@ import { authenticate } from './auth/middleware';
 export interface User {
   gameId?: string;
   id: string;
+  isPremium: boolean;
   name: string;
   wins: number;
   losses: number;
