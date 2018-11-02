@@ -39,7 +39,7 @@ export class Game {
   private readonly jumping: boolean = false;
 
   constructor(
-    private currentColor: Color,
+    public currentColor: Color,
     readonly id: number,
     readonly darkId: string,
     readonly lightId: string,
@@ -52,7 +52,7 @@ export class Game {
     }
   }
 
-  move(move: MoveRequest, userId: string): State | null {
+  move(move: MoveRequest): State | null {
     const piece = this.board[move.from.row][move.from.column];
 
     if (piece == null) {
