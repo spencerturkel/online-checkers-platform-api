@@ -165,8 +165,13 @@ const validateMoveRequest = (body: any): MoveRequest | null => {
 };
 
 const tryMove = (game: GameState, move: MoveRequest): State | null => {
-  // TODO:
-  return null;
+  const piece = game.board[move.from.row][move.from.column];
+
+  if (piece == null) {
+    return null;
+  }
+
+  return 'done';
 };
 
 gameRouter.post('/move', async (req, res) => {
