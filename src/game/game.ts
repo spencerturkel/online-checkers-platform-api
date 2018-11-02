@@ -53,6 +53,10 @@ export class Game {
   }
 
   move(move: MoveRequest): State | null {
+    if (this.board[move.to.row][move.to.column]) {
+      return null;
+    }
+
     const piece = this.board[move.from.row][move.from.column];
 
     if (piece == null) {

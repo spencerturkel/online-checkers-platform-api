@@ -3,9 +3,13 @@ import { Color, dark, Game, light, lightKing, Piece } from './game';
 const lightPlayer = 'p1';
 const darkPlayer = 'p2';
 
-describe('basic moves', () => {
-  let game: Game;
+let game: Game;
 
+const colorsAndNames = [[light, 'light'], [dark, 'dark']] as Array<
+  [Color, string]
+>;
+
+describe('basic moves', () => {
   beforeEach(() => {
     game = new Game(light, 0, lightPlayer, darkPlayer);
   });
@@ -22,6 +26,23 @@ describe('basic moves', () => {
       [null, null, null, null, null, null, null, null],
       [null, light, null, null, null, null, null, null],
       [null, null, light, null, light, null, light, null],
+      [null, light, null, light, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ]);
+  });
+
+  test('cannot moving into occupied space', () => {
+    expect(
+      game.move({ from: { row: 7, column: 0 }, to: { row: 6, column: 1 } }),
+    ).toBe(null);
+
+    expect(game.board).toEqual([
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, dark, null, dark, null, dark, null],
+      [null, dark, null, dark, null, dark, null, dark],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [light, null, light, null, light, null, light, null],
       [null, light, null, light, null, light, null, light],
       [light, null, light, null, light, null, light, null],
     ]);
@@ -113,9 +134,7 @@ describe('basic moves', () => {
     ).toBe(null);
   });
 
-  for (const [color, colorName] of [[light, 'light'], [dark, 'dark']] as Array<
-    [Color, string]
-  >) {
+  for (const [color, colorName] of colorsAndNames) {
     test(`${colorName} kings may move forward and backward`, () => {
       const king = (color + 'K') as Piece;
       game.board[3][3] = king;
@@ -185,4 +204,36 @@ describe('basic moves', () => {
       ]);
     });
   }
+});
+
+describe('jumps', () => {
+  beforeEach(() => {
+    game = new Game(light, 0, darkPlayer, lightPlayer, [
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, null, null, dark, null, null, null],
+      [null, null, null, dark, null, dark, null, dark],
+      [null, null, light, null, light, null, null, null],
+      [null, dark, null, null, null, null, null, null],
+      [light, null, light, null, dark, null, light, null],
+      [null, light, null, null, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ]);
+  });
+
+  test('light may jump dark', () => {
+    expect(
+      game.move({ from: { row: 3, column: 4 }, to: { row: 1, column: 6 } }),
+    ).toBe('done');
+
+    expect(game.board).toEqual([
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, null, null, dark, null, light, null],
+      [null, null, null, dark, null, null, null, dark],
+      [null, null, light, null, null, null, null, null],
+      [null, dark, null, null, null, null, null, null],
+      [light, null, light, null, dark, null, light, null],
+      [null, light, null, null, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ]);
+  });
 });
