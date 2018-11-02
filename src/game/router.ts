@@ -2,50 +2,13 @@ import { Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
 import { documents, tableName } from '../dynamo';
+import { Game, MoveRequest, Coordinate, MoveResponse } from './game';
 
 export const gameRouter = Router();
 
 gameRouter.use(authenticate);
 
 let waitingUserId: string | null = null;
-
-interface Coordinate {
-  row: number;
-  column: number;
-}
-interface MoveRequest {
-  from: Coordinate;
-  to: Coordinate;
-}
-type State = 'promoted' | 'jumping' | 'done' | 'win' | 'lose';
-interface MoveResponse {
-  state: State;
-}
-type Piece = 'RK' | 'BK' | 'R' | 'B';
-type Space = Piece | null;
-type Board = Space[][];
-
-class Game {
-  private readonly jumping: boolean = false;
-
-  constructor(
-    private readonly board: Board,
-    private readonly currentPlayerId: string,
-    readonly id: number,
-    readonly playerOneId: string,
-    readonly playerTwoId: string,
-  ) {}
-
-  move(move: MoveRequest): State | null {
-    const piece = this.board[move.from.row][move.from.column];
-
-    if (piece == null) {
-      return null;
-    }
-
-    return 'done';
-  }
-}
 
 const games: { [gameId: number]: Game } = {};
 let nextGameId = 0;
@@ -76,16 +39,6 @@ gameRouter.post('/start', async (req, res) => {
     gameId = nextGameId++;
 
     games[gameId] = new Game(
-      [
-        [null, 'B', null, 'B', null, 'B', null, 'B'],
-        ['B', null, 'B', null, 'B', null, 'B', null],
-        [null, 'B', null, 'B', null, 'B', null, 'B'],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        ['R', null, 'R', null, 'R', null, 'R', null],
-        [null, 'R', null, 'R', null, 'R', null, 'R'],
-        ['R', null, 'R', null, 'R', null, 'R', null],
-      ],
       currentUserId,
       gameId,
       currentUserId,
@@ -184,7 +137,7 @@ gameRouter.post('/move', async (req, res) => {
     return;
   }
 
-  const userId = req.session!.userId;
+  const userId = req.session!.userId as string;
   const game = Object.values(games).find(
     x => x.playerOneId === userId || x.playerTwoId === userId,
   );
@@ -194,7 +147,7 @@ gameRouter.post('/move', async (req, res) => {
     return;
   }
 
-  const state = game.move(moveRequest);
+  const state = game.move(moveRequest, userId);
 
   if (!state) {
     res.send(400);
