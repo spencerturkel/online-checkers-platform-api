@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { documents, tableName } from '../dynamo';
 import { environment } from '../environment';
-import { User, users } from '../user';
+import { User } from '../user';
 import { GoogleAuthVerifier } from './google-auth-verifier';
 import { authenticate } from './middleware';
 
@@ -32,29 +32,22 @@ if (!environment.production) {
 
     const userId = req.body.id as string;
 
-    const item = (await documents
-      .get({
-        Key: {
-          userId,
-        },
+    const user: User = {
+      userId,
+      isPremium: req.body.isPremium,
+      name: `Local User ${userId}`,
+      wins: 0,
+      losses: 0,
+    };
+
+    await documents
+      .put({
+        ConditionExpression: 'attribute_not_exists(userId)',
+        Item: user,
         TableName: tableName,
       })
-      .promise()).Item;
-
-    if (item) {
-      users.set(userId, item as User);
-    } else {
-      const user: User = {
-        userId,
-        isPremium: req.body.isPremium,
-        name: `Local User ${userId}`,
-        wins: 0,
-        losses: 0,
-      };
-
-      users.set(userId, user);
-      await documents.put({ Item: user, TableName: tableName }).promise();
-    }
+      .promise()
+      .catch(() => {});
 
     req.session!.userId = userId;
     res.sendStatus(201);
@@ -72,18 +65,23 @@ authRouter.post('/google', async (req, res) => {
     return res.sendStatus(401);
   }
 
+  const userId = payload.sub;
   const user: User = {
-    userId: payload.sub,
+    userId,
     isPremium: false,
     name: payload.name!,
     wins: 0,
     losses: 0,
   };
 
-  if (!users.get(user.userId)) {
-    users.set(user.userId, user);
-    await documents.put({ Item: user, TableName: tableName }).promise();
-  }
+  await documents
+    .put({
+      ConditionExpression: 'attribute_not_exists(userId)',
+      Item: user,
+      TableName: tableName,
+    })
+    .promise()
+    .catch(() => {});
 
   req.session!.userId = user.userId;
 

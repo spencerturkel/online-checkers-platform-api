@@ -1,11 +1,14 @@
 # @name playerOne
 POST {{host}}/auth/local
+Content-Type: application/json
+
+{"id": "[game.http] playerOne", "isPremium": false}
 
 ###
 
 @playerOneAuth = Cookie: {{playerOne.response.headers.Set-Cookie}}
 
-GET {{host}}/user/info
+GET {{host}}/user
 {{playerOneAuth}}
 
 ###
@@ -17,11 +20,14 @@ DELETE {{host}}/auth
 
 # @name playerTwo
 POST {{host}}/auth/local
+Content-Type: application/json
+
+{"id": "[game.http] playerTwo", "isPremium": false}
 
 ###
 @playerTwoAuth = Cookie: {{playerTwo.response.headers.Set-Cookie}}
 
-GET {{host}}/user/info
+GET {{host}}/user
 {{playerTwoAuth}}
 
 ###
