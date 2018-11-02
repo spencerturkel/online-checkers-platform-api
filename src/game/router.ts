@@ -28,7 +28,7 @@ type Board = Space[][];
 interface GameState {
   board: Board;
   currentPlayerId: string;
-  jumping: Coordinate;
+  jumping?: Coordinate;
   id: number;
   playerOneId: string;
   playerTwoId: string;
@@ -63,7 +63,17 @@ gameRouter.post('/start', async (req, res) => {
     gameId = nextGameId++;
 
     games[gameId] = {
-      digit: Math.floor(Math.random() * 10),
+      board: [
+        [null, 'B', null, 'B', null, 'B', null, 'B'],
+        ['B', null, 'B', null, 'B', null, 'B', null],
+        [null, 'B', null, 'B', null, 'B', null, 'B'],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        ['R', null, 'R', null, 'R', null, 'R', null],
+        [null, 'R', null, 'R', null, 'R', null, 'R'],
+        ['R', null, 'R', null, 'R', null, 'R', null],
+      ],
+      currentPlayerId: currentUserId,
       id: gameId,
       playerOneId: currentUserId,
       playerTwoId: waitingUserId,
