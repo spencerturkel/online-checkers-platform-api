@@ -35,20 +35,31 @@ export const defaultBoard = [
 ] as Board;
 
 export class Game {
+  readonly board: Board;
   private readonly jumping: boolean = false;
 
   constructor(
-    currentColor: Color,
+    private currentColor: Color,
     readonly id: number,
     readonly darkId: string,
     readonly lightId: string,
-    readonly board: Board = defaultBoard,
-  ) {}
+    board?: Board,
+  ) {
+    if (board) {
+      this.board = board;
+    } else {
+      this.board = JSON.parse(JSON.stringify(defaultBoard));
+    }
+  }
 
   move(move: MoveRequest, userId: string): State | null {
     const piece = this.board[move.from.row][move.from.column];
 
     if (piece == null) {
+      return null;
+    }
+
+    if (!piece.startsWith(this.currentColor)) {
       return null;
     }
 
@@ -58,6 +69,7 @@ export class Game {
 
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
+    this.currentColor = this.currentColor === light ? dark : light;
 
     return 'done';
   }
