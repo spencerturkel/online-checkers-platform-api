@@ -53,6 +53,14 @@ export class Game {
   }
 
   move(move: MoveRequest): State | null {
+    if (
+      [move.from.row, move.from.column, move.to.row, move.to.column].some(
+        n => !(n in this.board),
+      )
+    ) {
+      return null;
+    }
+
     if (this.board[move.to.row][move.to.column]) {
       return null;
     }
@@ -67,7 +75,10 @@ export class Game {
       return null;
     }
 
-    if (move.from.row === move.to.row || move.from.column === move.to.column) {
+    if (
+      Math.abs(move.from.row - move.to.row) !== 1 ||
+      Math.abs(move.from.column - move.to.column) !== 1
+    ) {
       return null;
     }
 
