@@ -35,8 +35,8 @@ export const defaultBoard = [
 ] as Board;
 
 export class Game {
-  readonly board: Board;
-  private readonly jumping: boolean = false;
+  board: Board;
+  readonly jumping: boolean = false;
 
   constructor(
     public currentColor: Color,
@@ -65,6 +65,16 @@ export class Game {
 
     if (move.from.row === move.to.row || move.from.column === move.to.column) {
       return null;
+    }
+
+    if (!piece.endsWith('K')) {
+      if (this.currentColor === dark && move.from.row > move.to.row) {
+        return null;
+      }
+
+      if (this.currentColor === light && move.from.row < move.to.row) {
+        return null;
+      }
     }
 
     this.board[move.to.row][move.to.column] = piece;

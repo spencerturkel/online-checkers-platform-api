@@ -10,7 +10,7 @@ describe('Game moves', () => {
     game = new Game(light, 0, lightPlayer, darkPlayer);
   });
 
-  test('Player One moving into empty space', () => {
+  test('light moving into empty space', () => {
     expect(
       game.move({ from: { row: 5, column: 0 }, to: { row: 4, column: 1 } }),
     ).toBe('done');
@@ -27,18 +27,62 @@ describe('Game moves', () => {
     ]);
   });
 
-  test('Player One moving into empty space', () => {
-    expect(
-      game.move({ from: { row: 5, column: 0 }, to: { row: 4, column: 1 } }),
-    ).toBe('done');
-
-    expect(game.board).toEqual([
+  test('light cannot move backwards', () => {
+    const board = [
       [null, dark, null, dark, null, dark, null, dark],
       [dark, null, dark, null, dark, null, dark, null],
       [null, dark, null, dark, null, dark, null, dark],
       [null, null, null, null, null, null, null, null],
       [null, light, null, null, null, null, null, null],
       [null, null, light, null, light, null, light, null],
+      [null, light, null, light, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ];
+
+    game.board = board;
+
+    expect(
+      game.move({ from: { row: 4, column: 1 }, to: { row: 5, column: 0 } }),
+    ).toBe(null);
+
+    expect(game.board).toEqual(board);
+  });
+
+  test('dark cannot move backwards', () => {
+    const board = [
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, dark, null, dark, null, dark, null],
+      [null, null, null, dark, null, dark, null, dark],
+      [dark, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [light, null, light, null, light, null, light, null],
+      [null, light, null, light, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ];
+
+    game.board = board;
+
+    expect(
+      game.move({ from: { row: 3, column: 0 }, to: { row: 2, column: 1 } }),
+    ).toBe(null);
+
+    expect(game.board).toEqual(board);
+  });
+
+  test('dark moving into empty space', () => {
+    game.currentColor = dark;
+
+    expect(
+      game.move({ from: { row: 2, column: 1 }, to: { row: 3, column: 2 } }),
+    ).toBe('done');
+
+    expect(game.board).toEqual([
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, dark, null, dark, null, dark, null],
+      [null, null, null, dark, null, dark, null, dark],
+      [null, null, dark, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [light, null, light, null, light, null, light, null],
       [null, light, null, light, null, light, null, light],
       [light, null, light, null, light, null, light, null],
     ]);
