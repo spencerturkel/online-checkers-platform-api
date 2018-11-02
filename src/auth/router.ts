@@ -82,6 +82,7 @@ authRouter.post('/google', async (req, res) => {
 
   if (!users.get(user.userId)) {
     users.set(user.userId, user);
+    await documents.put({ Item: user, TableName: tableName }).promise();
   }
 
   req.session!.userId = user.userId;
