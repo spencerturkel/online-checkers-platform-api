@@ -21,9 +21,14 @@ type State = 'promoted' | 'jumping' | 'done' | 'win' | 'lose';
 interface MoveResponse {
   state: State;
 }
+type Piece = 'RK' | 'BK' | 'R' | 'B';
+type Space = Piece | null;
+type Board = Space[][];
 
 interface GameState {
-  digit: number;
+  board: Board;
+  currentPlayerId: string;
+  jumping: Coordinate;
   id: number;
   playerOneId: string;
   playerTwoId: string;
