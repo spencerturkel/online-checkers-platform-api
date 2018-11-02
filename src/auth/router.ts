@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { documents, tableName } from '../dynamo';
 import { environment } from '../environment';
 import { User, users } from '../user';
 import { GoogleAuthVerifier } from './google-auth-verifier';
@@ -12,29 +13,50 @@ const googleAuthVerifier = new GoogleAuthVerifier(
 );
 
 if (!environment.production) {
-  let nextLocalUserId = 0;
-  authRouter.post('/local', (req, res) => {
-    if (req.session && req.session.userId) {
+  authRouter.post('/local', async (req, res) => {
+    if (req.session!.userId) {
       res.sendStatus(204);
       return;
     }
-
-    const user: User = {
-      id: `local-id-${nextLocalUserId}`,
-      isPremium: false,
-      name: `Local User ${nextLocalUserId}`,
-      wins: 0,
-      losses: 0,
-    };
-
-    ++nextLocalUserId;
-
-    if (!users.get(user.id)) {
-      users.set(user.id, user);
+    if (
+      !(
+        req.body &&
+        typeof req.body.id === 'string' &&
+        typeof req.body.isPremium === 'boolean'
+      )
+    ) {
+      res.status(400);
+      res.send('Expected "email", "isPremium", and "id" fields');
+      return;
     }
 
-    req.session!.userId = user.id;
+    const userId = req.body.id as string;
 
+    const item = (await documents
+      .get({
+        Key: {
+          userId,
+        },
+        TableName: tableName,
+      })
+      .promise()).Item;
+
+    if (item) {
+      users.set(userId, item as User);
+    } else {
+      const user: User = {
+        userId,
+        isPremium: req.body.isPremium,
+        name: `Local User ${userId}`,
+        wins: 0,
+        losses: 0,
+      };
+
+      users.set(userId, user);
+      await documents.put({ Item: user, TableName: tableName }).promise();
+    }
+
+    req.session!.userId = userId;
     res.sendStatus(201);
   });
 }
@@ -51,18 +73,18 @@ authRouter.post('/google', async (req, res) => {
   }
 
   const user: User = {
-    id: payload.sub,
+    userId: payload.sub,
     isPremium: false,
     name: payload.name!,
     wins: 0,
     losses: 0,
   };
 
-  if (!users.get(user.id)) {
-    users.set(user.id, user);
+  if (!users.get(user.userId)) {
+    users.set(user.userId, user);
   }
 
-  req.session!.userId = user.id;
+  req.session!.userId = user.userId;
 
   res.sendStatus(201);
 });

@@ -3,7 +3,7 @@ import { authenticate } from './auth/middleware';
 
 export interface User {
   gameId?: string;
-  id: string;
+  userId: string;
   isPremium: boolean;
   name: string;
   wins: number;

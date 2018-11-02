@@ -2,8 +2,17 @@
 
 # @name local
 POST {{host}}/auth/local
+Content-Type: application/json
+
+{"id": "local-auth.http", "isPremium": true}
 ###
 DELETE {{host}}/auth/
+###
+POST {{host}}/auth/local
+Cookie: {{local.response.headers.Set-Cookie}}
+Content-Type: application/json
+
+{"id": "local-auth.http", "isPremium": true}
 ###
 DELETE {{host}}/auth/
 Cookie: {{local.response.headers.Set-Cookie}}
