@@ -12,7 +12,7 @@
     },
     "max-classes-per-file": false,
     "member-access": false,
-    "no-any": true,
+    "no-any": false,
     "no-empty": false,
     "no-conditional-assignment": false,
     "no-console": false,

@@ -120,15 +120,58 @@ gameRouter.get('/waiting', async (req, res) => {
   res.json({ opponent });
 });
 
-gameRouter.post('/guess', async (req, res) => {
-  if (!req.body || !Object.keys(req.body).includes('digit')) {
-    res.sendStatus(400);
-    return;
+const validateMoveRequest = (body: any): MoveRequest | null => {
+  if (typeof body !== 'object') {
+    return null;
   }
 
-  const digit = Number(req.body.digit);
+  const validateCoordinate = (coordinate: any): Coordinate | null => {
+    if (typeof coordinate !== 'object') {
+      return null;
+    }
 
-  if (isNaN(digit)) {
+    if (
+      typeof coordinate.row !== 'number' ||
+      coordinate.row < 0 ||
+      coordinate.row > 7
+    ) {
+      return null;
+    }
+
+    if (
+      typeof coordinate.row !== 'number' ||
+      coordinate.column < 0 ||
+      coordinate.column > 7
+    ) {
+      return null;
+    }
+
+    return { row: coordinate.row, column: coordinate.column };
+  };
+
+  const from = validateCoordinate(body.from);
+
+  if (!from) {
+    return null;
+  }
+
+  const to = validateCoordinate(body.to);
+
+  if (!to) {
+    return null;
+  }
+
+  return { from, to };
+};
+
+const tryMove = (game: GameState, move: MoveRequest): State | null => {
+  // TODO:
+  return null;
+};
+
+gameRouter.post('/move', async (req, res) => {
+  const moveRequest = validateMoveRequest(req.body);
+  if (!moveRequest) {
     res.sendStatus(400);
     return;
   }
@@ -143,19 +186,24 @@ gameRouter.post('/guess', async (req, res) => {
     return;
   }
 
-  if (digit !== game.digit) {
-    res.json({ correct: false });
+  const state = tryMove(game, moveRequest);
+
+  if (!state) {
+    res.send(400);
     return;
   }
 
-  delete games[game.id];
-  await documents
-    .update({
-      Key: { userId },
-      TableName: tableName,
-      UpdateExpression: 'SET wins = wins + :one',
-      ExpressionAttributeValues: { ':one': 1 },
-    })
-    .promise();
-  res.json({ correct: true });
+  if (state === 'done') {
+    delete games[game.id];
+    await documents
+      .update({
+        Key: { userId },
+        TableName: tableName,
+        UpdateExpression: 'SET wins = wins + :one',
+        ExpressionAttributeValues: { ':one': 1 },
+      })
+      .promise();
+  }
+
+  res.json({ state } as MoveResponse);
 });
