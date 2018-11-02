@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+import DynamoDB from 'aws-sdk/clients/dynamodb';
 import cors from 'cors';
 import express from 'express';
 import session from 'express-session';
@@ -8,9 +9,12 @@ import { authRouter } from './auth/router';
 import { gameRouter } from './game/router';
 import { userRouter } from './user';
 
-sgMail.setApiKey(process.env.SENDGRID_KEY!);
+const dynamo = new DynamoDB();
+const documents = new DynamoDB.DocumentClient();
 
 const runningInProduction = process.env.NODE_ENV === 'production';
+
+sgMail.setApiKey(process.env.SENDGRID_KEY!);
 
 const server = express();
 
@@ -53,6 +57,19 @@ server.use(
 server.use('/auth', authRouter);
 server.use('/game', gameRouter);
 server.use('/user', userRouter);
+
+server.get('/table', async (req, res) => {
+  const table = (await dynamo
+    .describeTable({ TableName: 'OnlineCheckersPlatform' })
+    .promise()).Table;
+
+  if (!table) {
+    res.sendStatus(500);
+    return;
+  }
+
+  res.json(table);
+});
 
 server.post('/email', async (req, res) => {
   await sgMail.send({

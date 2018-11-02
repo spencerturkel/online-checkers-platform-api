@@ -5,4 +5,8 @@ Content-Type: application/json
     "subject": "SendGrid Test",
     "text": "Hey, this is a test using SendGrid!",
     "to": "spencer@palmbeachsoftware.com"
-    }
+}
+
+###
+
+GET {{host}}/table
