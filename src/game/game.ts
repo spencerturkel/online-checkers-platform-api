@@ -14,29 +14,34 @@ export interface MoveResponse {
   state: State;
 }
 
-export type Piece = 'RK' | 'BK' | 'R' | 'B';
+export type Color = 'D' | 'L';
+export type Piece = 'DK' | 'LK' | Color;
+export const dark: Color = 'D';
+export const light: Color = 'L';
+export const darkKing: Piece = 'DK';
+export const lightKing: Piece = 'LK';
 export type Space = Piece | null;
 export type Board = Space[][];
 
 export const defaultBoard = [
-  [null, 'B', null, 'B', null, 'B', null, 'B'],
-  ['B', null, 'B', null, 'B', null, 'B', null],
-  [null, 'B', null, 'B', null, 'B', null, 'B'],
+  [null, dark, null, dark, null, dark, null, dark],
+  [dark, null, dark, null, dark, null, dark, null],
+  [null, dark, null, dark, null, dark, null, dark],
   [null, null, null, null, null, null, null, null],
   [null, null, null, null, null, null, null, null],
-  ['R', null, 'R', null, 'R', null, 'R', null],
-  [null, 'R', null, 'R', null, 'R', null, 'R'],
-  ['R', null, 'R', null, 'R', null, 'R', null],
+  [light, null, light, null, light, null, light, null],
+  [null, light, null, light, null, light, null, light],
+  [light, null, light, null, light, null, light, null],
 ] as Board;
 
 export class Game {
   private readonly jumping: boolean = false;
 
   constructor(
-    currentPlayerId: string,
+    currentColor: Color,
     readonly id: number,
-    readonly playerOneId: string,
-    readonly playerTwoId: string,
+    readonly darkId: string,
+    readonly lightId: string,
     readonly board: Board = defaultBoard,
   ) {}
 
@@ -46,12 +51,11 @@ export class Game {
     if (piece == null) {
       return null;
     }
-    if (move.to.row > move.from.row) {
+
+    if (move.from.row === move.to.row || move.from.column === move.to.column) {
       return null;
     }
-    if (move.to.column < move.from.column) {
-      return null;
-    }
+
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
 

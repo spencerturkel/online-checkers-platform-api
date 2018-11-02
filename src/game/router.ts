@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
 import { documents, tableName } from '../dynamo';
-import { Game, MoveRequest, Coordinate, MoveResponse } from './game';
+import { Coordinate, Game, light, MoveRequest, MoveResponse } from './game';
 
 export const gameRouter = Router();
 
@@ -14,10 +14,10 @@ const games: { [gameId: number]: Game } = {};
 let nextGameId = 0;
 
 gameRouter.post('/start', async (req, res) => {
-  const currentUserId = req.session!.userId;
+  const currentUserId = req.session!.userId as string;
 
   const existingGame = Object.values(games).find(x =>
-    [x.playerOneId, x.playerTwoId].includes(currentUserId),
+    [x.darkId, x.lightId].includes(currentUserId),
   );
 
   let gameId;
@@ -38,12 +38,7 @@ gameRouter.post('/start', async (req, res) => {
 
     gameId = nextGameId++;
 
-    games[gameId] = new Game(
-      currentUserId,
-      gameId,
-      currentUserId,
-      waitingUserId,
-    );
+    games[gameId] = new Game(light, gameId, currentUserId, waitingUserId);
   }
 
   const { opponent } = (await documents
@@ -63,7 +58,7 @@ gameRouter.post('/start', async (req, res) => {
 gameRouter.get('/waiting', async (req, res) => {
   const userId = req.session!.userId;
   const game = Object.values(games).find(
-    x => x.playerOneId === userId || x.playerTwoId === userId,
+    x => x.darkId === userId || x.lightId === userId,
   );
 
   if (game == null) {
@@ -74,8 +69,7 @@ gameRouter.get('/waiting', async (req, res) => {
   const opponent = (await documents
     .get({
       Key: {
-        userId:
-          userId === game.playerOneId ? game.playerTwoId : game.playerOneId,
+        userId: userId === game.darkId ? game.lightId : game.darkId,
       },
       ExpressionAttributeNames: { '#name': 'name' },
       ProjectionExpression: '#name',
@@ -139,7 +133,7 @@ gameRouter.post('/move', async (req, res) => {
 
   const userId = req.session!.userId as string;
   const game = Object.values(games).find(
-    x => x.playerOneId === userId || x.playerTwoId === userId,
+    x => x.darkId === userId || x.lightId === userId,
   );
 
   if (game == null) {

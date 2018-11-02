@@ -1,10 +1,10 @@
-import { Game } from './game';
+import { dark, Game, light } from './game';
 
 describe('Game moves', () => {
   let game: Game;
 
   beforeEach(() => {
-    game = new Game('p1', 0, 'p1', 'p2');
+    game = new Game(light, 0, 'p1', 'p2');
   });
 
   test('Player One moving into empty space', () => {
@@ -16,30 +16,25 @@ describe('Game moves', () => {
     ).toBe('done');
 
     expect(game.board).toEqual([
-      [null, 'B', null, 'B', null, 'B', null, 'B'],
-      ['B', null, 'B', null, 'B', null, 'B', null],
-      [null, 'B', null, 'B', null, 'B', null, 'B'],
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, dark, null, dark, null, dark, null],
+      [null, dark, null, dark, null, dark, null, dark],
       [null, null, null, null, null, null, null, null],
-      [null, 'R', null, null, null, null, null, null],
-      [null, null, 'R', null, 'R', null, 'R', null],
-      [null, 'R', null, 'R', null, 'R', null, 'R'],
-      ['R', null, 'R', null, 'R', null, 'R', null],
+      [null, light, null, null, null, null, null, null],
+      [null, null, light, null, light, null, light, null],
+      [null, light, null, light, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
     ]);
   });
-  test('Backward move', () => {
-    expect(
-      game.move(
-        { from: { row: 4, column: 1 }, to: { row: 5, column: 0 } },
-        'p1',
-      ),
-    ).toBe(null);
-  });
-  test('Left Move', () => {
-    expect(
-      game.move(
-        { from: { row: 5, column: 2 }, to: { row: 5, column: 1 } },
-        'p1',
-      ),
-    ).toBe(null);
-  });
+
+  for (const move of [
+    { from: { row: 5, column: 2 }, to: { row: 5, column: 1 }, dir: 'Left' },
+    { from: { row: 5, column: 2 }, to: { row: 5, column: 3 }, dir: 'Right' },
+    { from: { row: 5, column: 2 }, to: { row: 4, column: 2 }, dir: 'Down' },
+    { from: { row: 5, column: 2 }, to: { row: 6, column: 2 }, dir: 'Up' },
+  ]) {
+    test(`${move.dir} Move`, () => {
+      expect(game.move(move, 'p1')).toBe(null);
+    });
+  }
 });
