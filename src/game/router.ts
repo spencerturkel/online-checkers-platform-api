@@ -25,16 +25,29 @@ type Piece = 'RK' | 'BK' | 'R' | 'B';
 type Space = Piece | null;
 type Board = Space[][];
 
-interface GameState {
-  board: Board;
-  currentPlayerId: string;
-  jumping?: Coordinate;
-  id: number;
-  playerOneId: string;
-  playerTwoId: string;
+class Game {
+  private readonly jumping: boolean = false;
+
+  constructor(
+    private readonly board: Board,
+    private readonly currentPlayerId: string,
+    readonly id: number,
+    readonly playerOneId: string,
+    readonly playerTwoId: string,
+  ) {}
+
+  move(move: MoveRequest): State | null {
+    const piece = this.board[move.from.row][move.from.column];
+
+    if (piece == null) {
+      return null;
+    }
+
+    return 'done';
+  }
 }
 
-const games: { [gameId: number]: GameState } = {};
+const games: { [gameId: number]: Game } = {};
 let nextGameId = 0;
 
 gameRouter.post('/start', async (req, res) => {
@@ -62,8 +75,8 @@ gameRouter.post('/start', async (req, res) => {
 
     gameId = nextGameId++;
 
-    games[gameId] = {
-      board: [
+    games[gameId] = new Game(
+      [
         [null, 'B', null, 'B', null, 'B', null, 'B'],
         ['B', null, 'B', null, 'B', null, 'B', null],
         [null, 'B', null, 'B', null, 'B', null, 'B'],
@@ -73,11 +86,11 @@ gameRouter.post('/start', async (req, res) => {
         [null, 'R', null, 'R', null, 'R', null, 'R'],
         ['R', null, 'R', null, 'R', null, 'R', null],
       ],
-      currentPlayerId: currentUserId,
-      id: gameId,
-      playerOneId: currentUserId,
-      playerTwoId: waitingUserId,
-    };
+      currentUserId,
+      gameId,
+      currentUserId,
+      waitingUserId,
+    );
   }
 
   const { opponent } = (await documents
@@ -164,16 +177,6 @@ const validateMoveRequest = (body: any): MoveRequest | null => {
   return { from, to };
 };
 
-const tryMove = (game: GameState, move: MoveRequest): State | null => {
-  const piece = game.board[move.from.row][move.from.column];
-
-  if (piece == null) {
-    return null;
-  }
-
-  return 'done';
-};
-
 gameRouter.post('/move', async (req, res) => {
   const moveRequest = validateMoveRequest(req.body);
   if (!moveRequest) {
@@ -191,7 +194,7 @@ gameRouter.post('/move', async (req, res) => {
     return;
   }
 
-  const state = tryMove(game, moveRequest);
+  const state = game.move(moveRequest);
 
   if (!state) {
     res.send(400);
