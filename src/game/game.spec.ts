@@ -34,4 +34,12 @@ describe('Game moves', () => {
       ),
     ).toBe(null);
   });
+  test('Left Move', () => {
+    expect(
+      game.move(
+        { from: { row: 5, column: 2 }, to: { row: 5, column: 1 } },
+        'p1',
+      ),
+    ).toBe(null);
+  });
 });
