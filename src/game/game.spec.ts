@@ -1,9 +1,9 @@
-import { dark, Game, light, lightKing, Piece } from './game';
+import { Color, dark, Game, light, lightKing, Piece } from './game';
 
 const lightPlayer = 'p1';
 const darkPlayer = 'p2';
 
-describe('Game moves', () => {
+describe('basic moves', () => {
   let game: Game;
 
   beforeEach(() => {
@@ -89,12 +89,12 @@ describe('Game moves', () => {
   });
 
   for (const move of [
-    { from: { row: 5, column: 2 }, to: { row: 5, column: 1 }, dir: 'Left' },
-    { from: { row: 5, column: 2 }, to: { row: 5, column: 3 }, dir: 'Right' },
-    { from: { row: 5, column: 2 }, to: { row: 4, column: 2 }, dir: 'Down' },
-    { from: { row: 5, column: 2 }, to: { row: 6, column: 2 }, dir: 'Up' },
+    { from: { row: 5, column: 2 }, to: { row: 5, column: 1 }, dir: 'left' },
+    { from: { row: 5, column: 2 }, to: { row: 5, column: 3 }, dir: 'right' },
+    { from: { row: 5, column: 2 }, to: { row: 4, column: 2 }, dir: 'down' },
+    { from: { row: 5, column: 2 }, to: { row: 6, column: 2 }, dir: 'up' },
   ]) {
-    test(`${move.dir} Move`, () => {
+    test(`cannot move ${move.dir}`, () => {
       expect(game.move(move)).toBe(null);
     });
   }
@@ -113,8 +113,10 @@ describe('Game moves', () => {
     ).toBe(null);
   });
 
-  for (const color of [light, dark]) {
-    test('kings may move SE', () => {
+  for (const [color, colorName] of [[light, 'light'], [dark, 'dark']] as Array<
+    [Color, string]
+  >) {
+    test(`${colorName} kings may move forward and backward`, () => {
       const king = (color + 'K') as Piece;
       game.board[3][3] = king;
       game.currentColor = color;
