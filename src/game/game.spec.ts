@@ -26,4 +26,12 @@ describe('Game moves', () => {
       ['R', null, 'R', null, 'R', null, 'R', null],
     ]);
   });
+  test('Backward move', () => {
+    expect(
+      game.move(
+        { from: { row: 4, column: 1 }, to: { row: 5, column: 0 } },
+        'p1',
+      ),
+    ).toBe(null);
+  });
 });

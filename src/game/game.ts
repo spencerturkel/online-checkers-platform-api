@@ -46,6 +46,9 @@ export class Game {
     if (piece == null) {
       return null;
     }
+    if (move.to.row > move.from.row) {
+      return null;
+    }
 
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
