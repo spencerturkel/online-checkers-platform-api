@@ -9,6 +9,19 @@ gameRouter.use(authenticate);
 
 let waitingUserId: string | null = null;
 
+interface Coordinate {
+  row: number;
+  column: number;
+}
+interface MoveRequest {
+  from: Coordinate;
+  to: Coordinate;
+}
+type State = 'promoted' | 'jumping' | 'done' | 'win' | 'lose';
+interface MoveResponse {
+  state: State;
+}
+
 interface GameState {
   digit: number;
   id: number;
