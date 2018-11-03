@@ -2,7 +2,14 @@ import { Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
 import { documents, tableName } from '../dynamo';
-import { Coordinate, Game, light, MoveRequest, MoveResponse } from './game';
+import {
+  Coordinate,
+  dark,
+  Game,
+  light,
+  MoveRequest,
+  MoveResponse,
+} from './game';
 
 export const gameRouter = Router();
 
@@ -141,7 +148,15 @@ gameRouter.post('/move', async (req, res) => {
     return;
   }
 
-  const state = game.move(moveRequest, userId);
+  if (
+    (game.darkId === userId && game.currentColor !== dark) ||
+    (game.lightId === userId && game.currentColor !== light)
+  ) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const state = game.move(moveRequest);
 
   if (!state) {
     res.send(400);
