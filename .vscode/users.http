@@ -1,12 +1,27 @@
 # @name auth
 POST {{host}}/auth/local
+Content-Type: application/json
 
+{
+    "id": "test"
+}
 ###
 
-GET {{host}}/user/info
+GET {{host}}/user
 Cookie: {{auth.response.headers.set-cookie}}
 
 ###
 
-GET {{host}}/user/stats
+POST {{host}}/user/upgrade
+Content-Type: application/json
+Cookie: {{auth.response.headers.set-cookie}}
+
+{
+    "stripeEmail": "spencer@palmbeachsoftware.com",
+    "stripeToken": "12345"
+}
+
+###
+
+DELETE {{host}}/user/upgrade
 Cookie: {{auth.response.headers.set-cookie}}

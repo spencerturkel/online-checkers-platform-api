@@ -22,32 +22,34 @@ if (!environment.production) {
       !(
         req.body &&
         typeof req.body.id === 'string' &&
-        typeof req.body.isPremium === 'boolean'
+        (!req.body.isPremium || typeof req.body.isPremium === 'boolean')
       )
     ) {
       res.status(400);
-      res.send('Expected "email", "isPremium", and "id" fields');
+      res.send('Expected "isPremium" and "id" fields');
       return;
     }
 
     const userId = req.body.id as string;
 
-    const user: User = {
-      userId,
-      isPremium: req.body.isPremium,
-      name: `Local User ${userId}`,
-      wins: 0,
-      losses: 0,
-    };
-
     await documents
       .put({
         ConditionExpression: 'attribute_not_exists(userId)',
-        Item: user,
+        Item: {
+          userId,
+          isPremium: req.body.isPremium || false,
+          name: `Local User ${userId}`,
+          wins: 0,
+          losses: 0,
+        },
         TableName: tableName,
       })
       .promise()
-      .catch(() => {});
+      .catch(e => {
+        if (e.code !== 'ConditionalCheckFailedException') {
+          throw e;
+        }
+      });
 
     req.session!.userId = userId;
     res.sendStatus(201);
