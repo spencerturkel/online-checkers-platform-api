@@ -55,7 +55,7 @@ export class Game {
   move(move: MoveRequest): State | null {
     if (
       [move.from.row, move.from.column, move.to.row, move.to.column].some(
-        n => !(n in this.board),
+        n => n < 0 || n > 7,
       )
     ) {
       return null;
@@ -75,13 +75,6 @@ export class Game {
       return null;
     }
 
-    if (
-      Math.abs(move.from.row - move.to.row) !== 1 ||
-      Math.abs(move.from.column - move.to.column) !== 1
-    ) {
-      return null;
-    }
-
     if (!piece.endsWith('K')) {
       if (this.currentColor === dark && move.from.row > move.to.row) {
         return null;
@@ -92,9 +85,33 @@ export class Game {
       }
     }
 
+    const rowVector = move.to.row - move.from.row;
+    const columnVector = move.to.column - move.from.column;
+    const distance = Math.abs(rowVector);
+
+    if (distance !== Math.abs(columnVector)) {
+      return null;
+    }
+
+    const opponentColor = this.currentColor === light ? dark : light;
+
+    if (distance === 2) {
+      const jumpedRow = move.from.row + rowVector / 2;
+      const jumpedColumn = move.from.column + columnVector / 2;
+      const jumpedPiece = this.board[jumpedRow][jumpedColumn];
+
+      if (!(jumpedPiece && jumpedPiece.startsWith(opponentColor))) {
+        return null;
+      }
+
+      this.board[jumpedRow][jumpedColumn] = null;
+    } else if (distance !== 1) {
+      return null;
+    }
+
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
-    this.currentColor = this.currentColor === light ? dark : light;
+    this.currentColor = opponentColor;
 
     return 'done';
   }

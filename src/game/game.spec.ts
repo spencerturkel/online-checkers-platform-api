@@ -301,7 +301,7 @@ describe('jumps', () => {
     ]);
   });
 
-  test.skip('light may jump dark', () => {
+  test('light may jump dark', () => {
     expect(
       game.move({ from: { row: 3, column: 4 }, to: { row: 1, column: 6 } }),
     ).toBe('done');
@@ -312,6 +312,25 @@ describe('jumps', () => {
       [null, null, null, dark, null, null, null, dark],
       [null, null, light, null, null, null, null, null],
       [null, dark, null, null, null, null, null, null],
+      [light, null, light, null, dark, null, light, null],
+      [null, light, null, null, null, light, null, light],
+      [light, null, light, null, light, null, light, null],
+    ]);
+  });
+
+  test('dark may jump light', () => {
+    game.currentColor = dark;
+
+    expect(
+      game.move({ from: { row: 2, column: 5 }, to: { row: 4, column: 3 } }),
+    ).toBe('done');
+
+    expect(game.board).toEqual([
+      [null, dark, null, dark, null, dark, null, dark],
+      [dark, null, null, null, dark, null, null, null],
+      [null, null, null, dark, null, null, null, dark],
+      [null, null, light, null, null, null, null, null],
+      [null, dark, null, dark, null, null, null, null],
       [light, null, light, null, dark, null, light, null],
       [null, light, null, null, null, light, null, light],
       [light, null, light, null, light, null, light, null],
