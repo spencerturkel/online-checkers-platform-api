@@ -165,14 +165,24 @@ gameRouter.post('/move', async (req, res) => {
 
   if (state === 'done') {
     delete games[game.id];
-    await documents
-      .update({
-        Key: { userId },
-        TableName: tableName,
-        UpdateExpression: 'SET wins = wins + :one',
-        ExpressionAttributeValues: { ':one': 1 },
-      })
-      .promise();
+    await Promise.all([
+      documents
+        .update({
+          Key: { userId },
+          TableName: tableName,
+          UpdateExpression: 'SET wins = wins + :one',
+          ExpressionAttributeValues: { ':one': 1 },
+        })
+        .promise(),
+      documents
+        .update({
+          Key: { userId: userId === game.darkId ? game.lightId : game.darkId },
+          TableName: tableName,
+          UpdateExpression: 'SET losses = losses + :one',
+          ExpressionAttributeValues: { ':one': 1 },
+        })
+        .promise(),
+    ]);
   }
 
   res.json({ state } as MoveResponse);
