@@ -13,6 +13,7 @@
     },
     {
       "type": "npm",
+      "label": "Test",
       "script": "watch:test:unit",
       "group": {
         "kind": "test",

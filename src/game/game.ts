@@ -8,7 +8,7 @@ export interface MoveRequest {
   to: Coordinate;
 }
 
-export type State = 'promoted' | 'jumping' | 'done' | 'win' | 'lose';
+export type State = 'promoted' | 'jumping' | 'done' | 'win';
 
 export interface MoveResponse {
   state: State;
@@ -111,6 +111,30 @@ export class Game {
 
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
+
+    let sawLight = false;
+    let sawDark = false;
+
+    for (const space of ([] as Space[]).concat(...this.board)) {
+      if (!space) {
+        continue;
+      }
+
+      if (space.startsWith(light)) {
+        sawLight = true;
+      } else if (space.startsWith(dark)) {
+        sawDark = true;
+      }
+
+      if (sawLight && sawDark) {
+        break;
+      }
+    }
+
+    if (!(sawLight && sawDark)) {
+      return 'win';
+    }
+
     this.currentColor = opponentColor;
 
     return 'done';

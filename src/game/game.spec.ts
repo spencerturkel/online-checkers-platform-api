@@ -1,4 +1,12 @@
-import { Color, dark, Game, light, lightKing, Piece } from './game';
+import {
+  Color,
+  dark,
+  Game,
+  light,
+  lightKing,
+  Piece,
+  MoveRequest,
+} from './game';
 
 const lightPlayer = 'p1';
 const darkPlayer = 'p2';
@@ -190,16 +198,15 @@ describe('basic moves', () => {
     ]);
   });
 
-  for (const move of [
-    { from: { row: 5, column: 2 }, to: { row: 5, column: 1 }, dir: 'left' },
-    { from: { row: 5, column: 2 }, to: { row: 5, column: 3 }, dir: 'right' },
-    { from: { row: 5, column: 2 }, to: { row: 4, column: 2 }, dir: 'down' },
-    { from: { row: 5, column: 2 }, to: { row: 6, column: 2 }, dir: 'up' },
-  ]) {
-    test(`cannot move ${move.dir}`, () => {
-      expect(game.move(move)).toBe(null);
-    });
-  }
+  test.each`
+    move                                                          | dir
+    ${{ from: { row: 5, column: 2 }, to: { row: 5, column: 1 } }} | ${'left'}
+    ${{ from: { row: 5, column: 2 }, to: { row: 5, column: 3 } }} | ${'right'}
+    ${{ from: { row: 5, column: 2 }, to: { row: 4, column: 2 } }} | ${'up'}
+    ${{ from: { row: 5, column: 2 }, to: { row: 6, column: 2 } }} | ${'down'}
+  `('cannot move $dir', ({ move }: { move: MoveRequest }) => {
+    expect(game.move(move)).toBe(null);
+  });
 
   test('light cannot move dark', () => {
     expect(
@@ -215,8 +222,13 @@ describe('basic moves', () => {
     ).toBe(null);
   });
 
-  for (const [color, colorName] of colorsAndNames) {
-    test(`${colorName} kings may move forward and backward`, () => {
+  test.each`
+    colorName  | color
+    ${'light'} | ${light}
+    ${'dark'}  | ${dark}
+  `(
+    `$colorName kings may move forward and backward`,
+    ({ color }: { color: Color }) => {
       const king = (color + 'K') as Piece;
       game.board[3][3] = king;
       game.currentColor = color;
@@ -283,8 +295,8 @@ describe('basic moves', () => {
         [null, light, null, light, null, light, null, light],
         [light, null, light, null, light, null, light, null],
       ]);
-    });
-  }
+    },
+  );
 });
 
 describe('jumps', () => {
@@ -318,6 +330,33 @@ describe('jumps', () => {
     ]);
   });
 
+  test('light may win', () => {
+    game.board = [
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, dark, null, null, null, null, null, null],
+      [light, null, null, null, null, null, null, null],
+    ];
+
+    expect(
+      game.move({ from: { row: 7, column: 0 }, to: { row: 5, column: 2 } }),
+    ).toBe('win');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, light, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+  });
   test('dark may jump light', () => {
     game.currentColor = dark;
 
@@ -334,6 +373,36 @@ describe('jumps', () => {
       [light, null, light, null, dark, null, light, null],
       [null, light, null, null, null, light, null, light],
       [light, null, light, null, light, null, light, null],
+    ]);
+  });
+
+  test('dark may win', () => {
+    game.currentColor = dark;
+
+    game.board = [
+      [null, dark, null, null, null, null, null, null],
+      [null, null, light, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 0, column: 1 }, to: { row: 2, column: 3 } }),
+    ).toBe('win');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, null, dark, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
     ]);
   });
 });
