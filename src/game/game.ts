@@ -54,9 +54,7 @@ export class Game {
 
   move(move: MoveRequest): State | null {
     if (
-      [move.from.row, move.from.column, move.to.row, move.to.column].some(
-        n => n < 0 || n > 7,
-      )
+      !(this.isValidCoordinate(move.from) && this.isValidCoordinate(move.to))
     ) {
       return null;
     }
@@ -67,11 +65,7 @@ export class Game {
 
     const piece = this.board[move.from.row][move.from.column];
 
-    if (piece == null) {
-      return null;
-    }
-
-    if (!piece.startsWith(this.currentColor)) {
+    if (piece == null || !piece.startsWith(this.currentColor)) {
       return null;
     }
 
@@ -110,7 +104,7 @@ export class Game {
     } else {
       for (const i of this.board.keys()) {
         for (const j of this.board.keys()) {
-          if (this.jumps({ row: i, column: j }).length !== 0) {
+          if (this.canJumpFrom({ row: i, column: j })) {
             return null;
           }
         }
@@ -127,6 +121,10 @@ export class Game {
     this.currentColor = opponentColor;
 
     return 'done';
+  }
+
+  private isValidCoordinate({ row, column }: Coordinate): boolean {
+    return [row, column].every(i => i >= 0 && i < 8);
   }
 
   private isWon(): boolean {
@@ -152,28 +150,32 @@ export class Game {
     return !(sawLight && sawDark);
   }
 
-  private jumps({ row, column }: Coordinate): Coordinate[] {
+  private canJumpFrom({ row, column }: Coordinate): boolean {
     const origin = this.board[row][column];
 
     if (!origin) {
-      return [];
+      return false;
     }
 
-    return [
+    for (const { row: destRow, column: destCol } of [
       { row: row - 2, column: column - 2 },
       { row: row - 2, column: column + 2 },
       { row: row + 2, column: column - 2 },
       { row: row + 2, column: column + 2 },
-    ].filter(({ row: destRow, column: destCol }) => {
+    ]) {
       if (destRow < 0 || destCol < 0 || destRow > 7 || destCol > 7) {
-        return false;
+        continue;
       }
 
       const jumpedRow = row + (destRow - row) / 2;
       const jumpedCol = column + (destCol - column) / 2;
       const jumpedPiece = this.board[jumpedRow][jumpedCol];
 
-      return jumpedPiece && !jumpedPiece.startsWith(origin[0]);
-    });
+      if (jumpedPiece && !jumpedPiece.startsWith(origin[0])) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
