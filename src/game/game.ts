@@ -107,11 +107,29 @@ export class Game {
       this.board[jumpedRow][jumpedColumn] = null;
     } else if (distance !== 1) {
       return null;
+    } else {
+      for (const i of this.board.keys()) {
+        for (const j of this.board.keys()) {
+          if (this.jumps({ row: i, column: j }).length !== 0) {
+            return null;
+          }
+        }
+      }
     }
 
     this.board[move.to.row][move.to.column] = piece;
     this.board[move.from.row][move.from.column] = null;
 
+    if (this.isWon()) {
+      return 'win';
+    }
+
+    this.currentColor = opponentColor;
+
+    return 'done';
+  }
+
+  private isWon(): boolean {
     let sawLight = false;
     let sawDark = false;
 
@@ -131,12 +149,31 @@ export class Game {
       }
     }
 
-    if (!(sawLight && sawDark)) {
-      return 'win';
+    return !(sawLight && sawDark);
+  }
+
+  private jumps({ row, column }: Coordinate): Coordinate[] {
+    const origin = this.board[row][column];
+
+    if (!origin) {
+      return [];
     }
 
-    this.currentColor = opponentColor;
+    return [
+      { row: row - 2, column: column - 2 },
+      { row: row - 2, column: column + 2 },
+      { row: row + 2, column: column - 2 },
+      { row: row + 2, column: column + 2 },
+    ].filter(({ row: destRow, column: destCol }) => {
+      if (destRow < 0 || destCol < 0 || destRow > 7 || destCol > 7) {
+        return false;
+      }
 
-    return 'done';
+      const jumpedRow = row + (destRow - row) / 2;
+      const jumpedCol = column + (destCol - column) / 2;
+      const jumpedPiece = this.board[jumpedRow][jumpedCol];
+
+      return jumpedPiece && !jumpedPiece.startsWith(origin[0]);
+    });
   }
 }

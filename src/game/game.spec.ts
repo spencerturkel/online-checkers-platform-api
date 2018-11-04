@@ -4,8 +4,8 @@ import {
   Game,
   light,
   lightKing,
-  Piece,
   MoveRequest,
+  Piece,
 } from './game';
 
 const lightPlayer = 'p1';
@@ -312,6 +312,18 @@ describe('jumps', () => {
       [light, null, light, null, light, null, light, null],
     ]);
   });
+
+  test.each`
+    color    | colorName  | move
+    ${light} | ${'light'} | ${{ from: { row: 3, column: 2 }, to: { row: 2, column: 1 } }}
+    ${dark}  | ${'dark'}  | ${{ from: { row: 1, column: 0 }, to: { row: 2, column: 1 } }}
+  `(
+    '$colorName must jump if possible',
+    ({ color, move }: { color: Color; move: MoveRequest }) => {
+      game.currentColor = color;
+      expect(game.move(move)).toBe(null);
+    },
+  );
 
   test('light may jump dark', () => {
     expect(
