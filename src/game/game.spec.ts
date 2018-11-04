@@ -7,6 +7,8 @@ import {
   MoveRequest,
   Piece,
   darkKing,
+  Space,
+  Coordinate,
 } from './game';
 
 const lightPlayer = 'p1';
@@ -475,5 +477,129 @@ describe('promotion', () => {
       Array(8).fill(null),
       [light, darkKing, null, null, null, null, null, null],
     ]);
+  });
+});
+
+describe('jump chaining', () => {
+  test('may only chain one piece', () => {
+    game = new Game(light, 0, darkPlayer, lightPlayer, [
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, dark, null, dark, null, null, null],
+      [null, light, null, null, null, null, null, null],
+      [null, null, dark, null, null, null, null, null],
+      [null, light, null, null, null, null, null, null],
+    ]);
+
+    expect(
+      game.move({ from: { row: 7, column: 1 }, to: { row: 5, column: 3 } }),
+    ).toBe('jumping');
+    expect(
+      game.move({ from: { row: 5, column: 1 }, to: { row: 3, column: 3 } }),
+    ).toBe(null);
+    expect(
+      game.move({ from: { row: 5, column: 3 }, to: { row: 3, column: 1 } }),
+    ).toBe('done');
+    expect(game.currentColor).toBe(dark);
+
+    expect(game.board).toEqual([
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, light, null, null, null, null, null, null],
+      [null, null, null, null, dark, null, null, null],
+      [null, light, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]);
+  });
+
+  test('allows intermediate choice', () => {
+    const setGame = () => {
+      game = new Game(light, 0, darkPlayer, lightPlayer, [
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, dark, null, dark, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, dark, null, null, null, null, null],
+        [null, light, null, null, null, null, null, null],
+      ]);
+    };
+
+    setGame();
+    expect(
+      game.move({ from: { row: 7, column: 1 }, to: { row: 5, column: 3 } }),
+    ).toBe('jumping');
+    expect(
+      game.move({ from: { row: 5, column: 3 }, to: { row: 3, column: 1 } }),
+    ).toBe('done');
+    expect(game.currentColor).toBe(dark);
+    expect(game.board).toEqual([
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, light, null, null, null, null, null, null],
+      [null, null, null, null, dark, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]);
+
+    setGame();
+    expect(
+      game.move({ from: { row: 7, column: 1 }, to: { row: 5, column: 3 } }),
+    ).toBe('jumping');
+    expect(
+      game.move({ from: { row: 5, column: 3 }, to: { row: 3, column: 5 } }),
+    ).toBe('done');
+    expect(game.currentColor).toBe(dark);
+    expect(game.board).toEqual([
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, light, null, null],
+      [null, null, dark, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]);
+  });
+
+  test('ends with promotion', () => {
+    game = new Game(light, 0, darkPlayer, lightPlayer, [
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, dark, null, dark, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, dark, null, null, null, dark, null, null],
+      [light, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]);
+
+    expect(
+      game.move({ from: { row: 4, column: 0 }, to: { row: 2, column: 2 } }),
+    ).toBe('jumping');
+
+    expect(
+      game.move({ from: { row: 2, column: 2 }, to: { row: 0, column: 4 } }),
+    ).toBe('promoted');
+
+    expect(game.board).toEqual([
+      [null, null, null, null, lightKing, null, null, null],
+      [null, null, null, null, null, dark, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, dark, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]);
+
+    expect(game.currentColor).toEqual(dark);
   });
 });

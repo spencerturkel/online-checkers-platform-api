@@ -36,7 +36,7 @@ export const defaultBoard = [
 
 export class Game {
   board: Board;
-  readonly jumping: boolean = false;
+  private jumpingFrom?: Coordinate;
 
   constructor(
     public currentColor: Color,
@@ -54,8 +54,16 @@ export class Game {
 
   move(move: MoveRequest): State | null {
     if (
-      !(this.isValidCoordinate(move.from) && this.isValidCoordinate(move.to))
+      this.jumpingFrom &&
+      (move.from.row !== this.jumpingFrom.row ||
+        move.from.column !== this.jumpingFrom.column)
     ) {
+      return null;
+    } else if (!this.isValidCoordinate(move.from)) {
+      return null;
+    }
+
+    if (!this.isValidCoordinate(move.to)) {
       return null;
     }
 
@@ -121,6 +129,11 @@ export class Game {
       return 'win';
     }
 
+    if (!isPromotion && this.canJumpFrom(move.to)) {
+      this.jumpingFrom = move.to;
+      return 'jumping';
+    }
+
     this.currentColor = opponentColor;
 
     return isPromotion ? 'promoted' : 'done';
@@ -176,7 +189,13 @@ export class Game {
     }
 
     for (const [destRow, destCol] of destinations) {
-      if (destRow < 0 || destCol < 0 || destRow > 7 || destCol > 7) {
+      if (
+        destRow < 0 ||
+        destCol < 0 ||
+        destRow > 7 ||
+        destCol > 7 ||
+        this.board[destRow][destCol]
+      ) {
         continue;
       }
 
