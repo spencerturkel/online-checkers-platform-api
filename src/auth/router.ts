@@ -18,15 +18,9 @@ if (!environment.production) {
       res.sendStatus(204);
       return;
     }
-    if (
-      !(
-        req.body &&
-        typeof req.body.id === 'string' &&
-        (!req.body.isPremium || typeof req.body.isPremium === 'boolean')
-      )
-    ) {
+    if (!(req.body && typeof req.body.id === 'string')) {
       res.status(400);
-      res.send('Expected "isPremium" and "id" fields');
+      res.send('Expected "id" string');
       return;
     }
 

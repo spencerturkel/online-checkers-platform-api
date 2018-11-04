@@ -17,12 +17,11 @@ export const userRouter = Router();
 
 userRouter.use(authenticate);
 
-userRouter.get('/', async (req: Request, res) => {
-  const { userId } = req.session!;
-
+userRouter.get('/', async (req, res) => {
   res.json(
-    (await documents.get({ Key: { userId }, TableName: tableName }).promise())
-      .Item,
+    (await documents
+      .get({ Key: { userId: req.userId }, TableName: tableName })
+      .promise()).Item,
   );
 });
 
@@ -41,6 +40,7 @@ userRouter.post('/upgrade', async (req, res) => {
   }
 
   let customer: Stripe.customers.ICustomer;
+
   try {
     customer = await stripe.customers.create({
       email: req.body.stripeEmail as string | undefined,
@@ -48,20 +48,26 @@ userRouter.post('/upgrade', async (req, res) => {
     });
   } catch (e) {
     console.warn('stripe error', { e, body: req.body });
-    res.sendStatus(400);
+    res.sendStatus(500);
     return;
   }
 
-  await stripe.charges.create({
-    amount: 50,
-    customer: customer.id,
-    currency: 'usd',
-    description: 'Premium Upgrade',
-  });
+  try {
+    await stripe.charges.create({
+      amount: 50,
+      customer: customer.id,
+      currency: 'usd',
+      description: 'Premium Upgrade',
+    });
+  } catch (e) {
+    console.warn('stripe error', e);
+    res.sendStatus(500);
+    return;
+  }
 
   await documents
     .update({
-      Key: { userId: req.session!.userId },
+      Key: { userId: req.userId },
       TableName: tableName,
       UpdateExpression: 'SET isPremium = :true',
       ExpressionAttributeValues: { ':true': true },
@@ -75,7 +81,7 @@ if (!environment.production) {
   userRouter.delete('/upgrade', async (req, res) => {
     await documents
       .update({
-        Key: { userId: req.session!.userId },
+        Key: { userId: req.userId },
         TableName: tableName,
         UpdateExpression: 'SET isPremium = :false',
         ExpressionAttributeValues: { ':false': false },
