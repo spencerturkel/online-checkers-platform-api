@@ -6,6 +6,7 @@ import {
   lightKing,
   MoveRequest,
   Piece,
+  darkKing,
 } from './game';
 
 const lightPlayer = 'p1';
@@ -415,6 +416,64 @@ describe('jumps', () => {
       Array(8).fill(null),
       Array(8).fill(null),
       Array(8).fill(null),
+    ]);
+  });
+});
+
+describe('promotion', () => {
+  test('light move promotion', () => {
+    game = new Game(light, 0, darkPlayer, lightPlayer, [
+      Array(8).fill(null),
+      [light, null, null, null, null, null, null, null],
+      [dark, null, null, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+
+    expect(
+      game.move({ from: { row: 1, column: 0 }, to: { row: 0, column: 1 } }),
+    ).toBe('promoted');
+
+    expect(game.board).toEqual([
+      [null, lightKing, null, null, null, null, null, null],
+      Array(8).fill(null),
+      [dark, null, null, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+  });
+
+  test('dark move promotion', () => {
+    game = new Game(dark, 0, darkPlayer, lightPlayer, [
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [dark, null, null, null, null, null, null, null],
+      [light, null, null, null, null, null, null, null],
+    ]);
+
+    expect(
+      game.move({ from: { row: 6, column: 0 }, to: { row: 7, column: 1 } }),
+    ).toBe('promoted');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [light, darkKing, null, null, null, null, null, null],
     ]);
   });
 });

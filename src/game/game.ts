@@ -111,7 +111,10 @@ export class Game {
       }
     }
 
-    this.board[move.to.row][move.to.column] = piece;
+    const isPromotion = move.to.row === 0 || move.to.row === 7;
+    this.board[move.to.row][move.to.column] = isPromotion
+      ? ((piece + 'K') as Space)
+      : piece;
     this.board[move.from.row][move.from.column] = null;
 
     if (this.isWon()) {
@@ -120,7 +123,7 @@ export class Game {
 
     this.currentColor = opponentColor;
 
-    return 'done';
+    return isPromotion ? 'promoted' : 'done';
   }
 
   private isValidCoordinate({ row, column }: Coordinate): boolean {
@@ -157,12 +160,22 @@ export class Game {
       return false;
     }
 
-    for (const { row: destRow, column: destCol } of [
-      { row: row - 2, column: column - 2 },
-      { row: row - 2, column: column + 2 },
-      { row: row + 2, column: column - 2 },
-      { row: row + 2, column: column + 2 },
-    ]) {
+    const destinations = [];
+
+    if (origin.endsWith('K')) {
+      destinations.push(
+        [row - 2, column - 2],
+        [row - 2, column + 2],
+        [row + 2, column - 2],
+        [row + 2, column + 2],
+      );
+    } else if (origin === light) {
+      destinations.push([row - 2, column - 2], [row - 2, column + 2]);
+    } else {
+      destinations.push([row + 2, column - 2], [row + 2, column + 2]);
+    }
+
+    for (const [destRow, destCol] of destinations) {
       if (destRow < 0 || destCol < 0 || destRow > 7 || destCol > 7) {
         continue;
       }
