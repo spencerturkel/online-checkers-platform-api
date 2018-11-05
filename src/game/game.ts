@@ -40,7 +40,6 @@ export class Game {
 
   constructor(
     public currentColor: Color,
-    readonly id: number,
     readonly darkId: string,
     readonly lightId: string,
     board?: Board,

@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 
 import { authenticate } from './auth/middleware';
 import { documents, tableName } from './dynamo';
-import { Game } from './game/game';
+import { dark, Game, light } from './game/game';
 import { logger } from './logger';
 
 export const roomRouter = Router();
@@ -185,6 +185,7 @@ roomRouter.post('/join/:id', async (req, res) => {
         name: 'deciding',
         opponent,
       };
+      roomsByUserId[req.userId] = room;
       res.sendStatus(204);
       setRoomUserName(opponent);
       return;
@@ -194,23 +195,67 @@ roomRouter.post('/join/:id', async (req, res) => {
   res.sendStatus(404);
 });
 
-roomRouter.post('/leave', (req, res) => {
+const requireRoom: RequestHandler = (req, res, next) => {
   if (!req.room) {
-    logger.debug('User %s attempted to leave non-existent room', req.userId);
+    logger.debug('User %s attempted to act on non-existent room', req.userId);
     res.sendStatus(404);
-    return;
+  } else {
+    next();
   }
+};
 
-  removeUser(req.room, req.userId);
+roomRouter.post('/leave', requireRoom, (req, res) => {
+  removeUser(req.room!, req.userId);
   res.sendStatus(204);
 });
 
-roomRouter.get('/', (req, res) => {
-  if (req.room == null) {
-    logger.debug('User %s attempted to get non-existent room', req.userId);
-    res.sendStatus(404);
+roomRouter.get('/', requireRoom, (req, res) => {
+  res.json(req.room);
+});
+
+roomRouter.post('/first', requireRoom, (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'deciding') {
+    logger.info('User %s attempted to decide on non-deciding room', req.userId);
+    res.sendStatus(204);
     return;
   }
 
-  res.json(req.room);
+  const decision = req.body.decision;
+
+  if (
+    decision !== 'challenger' &&
+    decision !== 'opponent' &&
+    decision !== 'random'
+  ) {
+    res.sendStatus(400);
+    return;
+  }
+
+  if (req.userId === room.challenger.id) {
+    room.state.challengerDecision = decision;
+  } else {
+    room.state.opponentDecision = decision;
+  }
+
+  if (room.state.challengerDecision === room.state.opponentDecision) {
+    room.state = {
+      game: new Game(
+        decision === 'challenger'
+          ? dark
+          : decision === 'opponent'
+            ? light
+            : Math.random() >= 0.5
+              ? dark
+              : light,
+        room.challenger.id,
+        room.state.opponent.id,
+      ),
+      name: 'playing',
+      opponent: room.state.opponent,
+    };
+  }
+
+  res.sendStatus(204);
 });

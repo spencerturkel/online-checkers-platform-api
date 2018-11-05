@@ -22,7 +22,7 @@ const colorsAndNames = [[light, 'light'], [dark, 'dark']] as Array<
 
 describe('basic moves', () => {
   beforeEach(() => {
-    game = new Game(light, 0, lightPlayer, darkPlayer);
+    game = new Game(light, lightPlayer, darkPlayer);
   });
 
   test('light moving into empty space', () => {
@@ -304,7 +304,7 @@ describe('basic moves', () => {
 
 describe('jumps', () => {
   beforeEach(() => {
-    game = new Game(light, 0, darkPlayer, lightPlayer, [
+    game = new Game(light, darkPlayer, lightPlayer, [
       [null, dark, null, dark, null, dark, null, dark],
       [dark, null, null, null, dark, null, null, null],
       [null, null, null, dark, null, dark, null, dark],
@@ -424,7 +424,7 @@ describe('jumps', () => {
 
 describe('promotion', () => {
   test('light move promotion', () => {
-    game = new Game(light, 0, darkPlayer, lightPlayer, [
+    game = new Game(light, darkPlayer, lightPlayer, [
       Array(8).fill(null),
       [light, null, null, null, null, null, null, null],
       [dark, null, null, null, null, null, null, null],
@@ -452,7 +452,7 @@ describe('promotion', () => {
   });
 
   test('dark move promotion', () => {
-    game = new Game(dark, 0, darkPlayer, lightPlayer, [
+    game = new Game(dark, darkPlayer, lightPlayer, [
       Array(8).fill(null),
       Array(8).fill(null),
       Array(8).fill(null),
@@ -482,7 +482,7 @@ describe('promotion', () => {
 
 describe('jump chaining', () => {
   test('may only chain one piece', () => {
-    game = new Game(light, 0, darkPlayer, lightPlayer, [
+    game = new Game(light, darkPlayer, lightPlayer, [
       [null, null, null, null, null, null, null, null],
       [null, null, null, null, null, null, null, null],
       [null, null, null, null, null, null, null, null],
@@ -518,7 +518,7 @@ describe('jump chaining', () => {
 
   test('allows intermediate choice', () => {
     const setGame = () => {
-      game = new Game(light, 0, darkPlayer, lightPlayer, [
+      game = new Game(light, darkPlayer, lightPlayer, [
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
         [null, null, null, null, null, null, null, null],
@@ -570,7 +570,7 @@ describe('jump chaining', () => {
   });
 
   test('ends with promotion', () => {
-    game = new Game(light, 0, darkPlayer, lightPlayer, [
+    game = new Game(light, darkPlayer, lightPlayer, [
       [null, null, null, null, null, null, null, null],
       [null, null, null, dark, null, dark, null, null],
       [null, null, null, null, null, null, null, null],
