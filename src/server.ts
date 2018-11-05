@@ -3,8 +3,10 @@ import cors from 'cors';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
+import morgan from 'morgan';
 
 import { authRouter } from './auth/router';
+import { environment } from './environment';
 import { gameRouter } from './game/router';
 import { userRouter } from './user';
 
@@ -47,6 +49,22 @@ server.use(
     resave: false,
     saveUninitialized: false,
     secret: runningInProduction ? process.env.SESSION_SECRET! : 'secret',
+  }),
+);
+
+const morganFormat = environment.production ? 'combined' : 'dev';
+
+server.use(
+  morgan(morganFormat, {
+    skip: (req, res) => res.statusCode < 400,
+    stream: process.stderr,
+  }),
+);
+
+server.use(
+  morgan(morganFormat, {
+    skip: (req, res) => res.statusCode >= 400,
+    stream: process.stdout,
   }),
 );
 

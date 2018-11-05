@@ -1,7 +1,9 @@
-import { Router, RequestHandler } from 'express';
+import { Router } from 'express';
 
 import { authenticate } from './auth/middleware';
+import { documents, tableName } from './dynamo';
 import { Game } from './game/game';
+import { logger } from './logger';
 
 export const roomRouter = Router();
 
@@ -28,41 +30,74 @@ declare global {
   }
 }
 
+const roomUserTimeout = Number(process.env.ROOM_USER_TIMEOUT) || 30000;
+
 roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
+
+  if (!req.room) {
+    logger.info(`No Room for user ${req.userId}`);
+    next();
+    return;
+  }
 
   req.roomUser =
     req.userId === req.room.challenger.id
       ? req.room.challenger
       : req.room.opponent!;
 
+  logger.info(`Room User ${req.roomUser.id}`);
+
   clearTimeout(req.roomUser.timer);
   req.roomUser.timer = setTimeout(() => {
+    logger.info(`Timing out user ${req.roomUser.id}`);
     removeUser(req.room, req.roomUser.id);
-  }, 30000);
+  }, roomUserTimeout);
 
   next();
 });
 
 const roomsByUserId = {} as { [userId: string]: Room };
 
-roomRouter.post('/create', (req, res) => {
+roomRouter.post('/create', async (req, res) => {
   if (req.room != null) {
+    logger.debug('Room already created for user %s', req.userId);
     res.sendStatus(204);
     return;
   }
 
-  roomsByUserId[req.userId] = {
-    challenger: {
-      id: req.userId,
-      name: '', // TODO: get name
-      timer: setTimeout(() => {
-        removeUser(req.room, req.roomUser.id);
-      }, 30000),
-    },
+  const challenger = {
+    id: req.userId,
+    name: '',
+    timer: setTimeout(() => {
+      logger.info('Timing out user %s', req.userId);
+      removeUser(req.room, req.roomUser.id);
+    }, roomUserTimeout),
   };
 
-  // TODO: email the opponent if email in req.body
+  roomsByUserId[req.userId] = { challenger };
+
+  res.sendStatus(204);
+  logger.info('Created room for user %s', challenger.id);
+
+  try {
+    challenger.name = (await documents
+      .get({
+        Key: { userId: req.userId },
+        ExpressionAttributeNames: { '#name': 'name' },
+        ProjectionExpression: '#name',
+        TableName: tableName,
+      })
+      .promise()).Item!.name;
+
+    logger.debug('Retrieved name of challenger %s', challenger.name);
+  } catch (e) {
+    logger.error(
+      'Error retrieving name of challenger %s : %s',
+      challenger.id,
+      e instanceof Error ? e.message : e,
+    );
+  }
 });
 
 const removeUser = (room: Room, userId: string): void => {
@@ -71,13 +106,17 @@ const removeUser = (room: Room, userId: string): void => {
       room.opponent = undefined;
     } else {
       room.challenger = room.opponent;
+      logger.info('User %s became challenger', room.challenger.id);
     }
   }
+
   delete roomsByUserId[userId];
+  logger.info('Removed user %s from room', userId);
 };
 
 roomRouter.post('/leave', (req, res) => {
   if (!req.room) {
+    logger.debug('User %s attempted to leave non-existent room', req.userId);
     res.sendStatus(404);
     return;
   }
@@ -87,18 +126,18 @@ roomRouter.post('/leave', (req, res) => {
 });
 
 roomRouter.get('/', (req, res) => {
-  const room = roomsByUserId[req.userId];
-  if (room == null) {
+  if (req.room == null) {
+    logger.debug('User %s attempted to get non-existent room', req.userId);
     res.sendStatus(404);
     return;
   }
 
-  if (room.opponent != null) {
-    if (room.opponent.id === req.userId) {
-      res.json({ name: room.challenger.name });
+  if (req.room.opponent != null) {
+    if (req.room.opponent.id === req.userId) {
+      res.json({ name: req.room.challenger.name });
       return;
     }
 
-    res.json({ name: room.opponent.name });
+    res.json({ name: req.room.opponent.name });
   }
 });

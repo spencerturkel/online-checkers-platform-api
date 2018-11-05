@@ -23,7 +23,9 @@
     "express-session": "^1.15.6",
     "google-auth-library": "^2.0.0",
     "helmet": "^3.13.0",
-    "stripe": "^6.13.0"
+    "morgan": "^1.9.1",
+    "stripe": "^6.13.0",
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@types/compression": "0.0.36",
@@ -32,6 +34,7 @@
     "@types/express-session": "^1.15.11",
     "@types/helmet": "0.0.41",
     "@types/jest": "^23.1.4",
+    "@types/morgan": "^1.7.35",
     "@types/node": "^8.10.30",
     "@types/stripe": "^6.0.3",
     "@types/supertest": "^2.0.6",
