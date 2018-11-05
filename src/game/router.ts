@@ -1,8 +1,9 @@
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 
 import { authenticate } from '../auth/middleware';
 import { documents, tableName } from '../dynamo';
 import {
+  Color,
   Coordinate,
   dark,
   Game,
@@ -17,35 +18,51 @@ gameRouter.use(authenticate);
 
 let waitingUserId: string | null = null;
 
-const games: { [gameId: number]: Game } = {};
+const currentGames: Game[] = [];
 let nextGameId = 0;
 
-gameRouter.post('/start', async (req, res) => {
-  const currentUserId = req.session!.userId as string;
+declare global {
+  namespace Express {
+    interface Request {
+      game?: Game;
+      userColor?: Color;
+    }
+  }
+}
 
-  const existingGame = Object.values(games).find(x =>
-    [x.darkId, x.lightId].includes(currentUserId),
-  );
+const findGame: RequestHandler = (req, res, next) => {
+  for (const game of currentGames) {
+    if (game.lightId === req.userId) {
+      req.game = game;
+      req.userColor = light;
+      break;
+    }
 
+    if (game.darkId === req.userId) {
+      req.game = game;
+      req.userColor = dark;
+      break;
+    }
+  }
+
+  next();
+};
+
+gameRouter.post('/start', findGame, async (req, res) => {
   let gameId;
 
-  if (existingGame) {
-    gameId = existingGame.id;
+  if (req.game) {
+    gameId = req.game.id;
+  } else if (waitingUserId == null) {
+    waitingUserId = req.userId;
+    res.sendStatus(204);
+    return;
+  } else if (waitingUserId === req.userId) {
+    res.sendStatus(400);
+    return;
   } else {
-    if (waitingUserId === null) {
-      waitingUserId = currentUserId;
-      res.sendStatus(204);
-      return;
-    }
-
-    if (waitingUserId === currentUserId) {
-      res.sendStatus(400);
-      return;
-    }
-
     gameId = nextGameId++;
-
-    games[gameId] = new Game(light, gameId, currentUserId, waitingUserId);
+    currentGames.push(new Game(light, gameId, req.userId, waitingUserId));
   }
 
   const { opponent } = (await documents
@@ -62,13 +79,8 @@ gameRouter.post('/start', async (req, res) => {
   waitingUserId = null;
 });
 
-gameRouter.get('/waiting', async (req, res) => {
-  const userId = req.session!.userId;
-  const game = Object.values(games).find(
-    x => x.darkId === userId || x.lightId === userId,
-  );
-
-  if (game == null) {
+gameRouter.get('/waiting', findGame, async (req, res) => {
+  if (req.game == null) {
     res.sendStatus(204);
     return;
   }
@@ -76,7 +88,8 @@ gameRouter.get('/waiting', async (req, res) => {
   const opponent = (await documents
     .get({
       Key: {
-        userId: userId === game.darkId ? game.lightId : game.darkId,
+        userId:
+          req.userId === req.game.darkId ? req.game.lightId : req.game.darkId,
       },
       ExpressionAttributeNames: { '#name': 'name' },
       ProjectionExpression: '#name',
@@ -131,27 +144,31 @@ const validateMoveRequest = (body: any): MoveRequest | null => {
   return { from, to };
 };
 
-gameRouter.post('/move', async (req, res) => {
+gameRouter.get('/turn', findGame, (req, res) => {
+  if (!req.game) {
+    res.sendStatus(404);
+    return;
+  }
+
+  const isYourTurn = req.game.currentColor === req.userColor;
+  return { isYourTurn, board: isYourTurn ? req.game.board : null };
+});
+
+gameRouter.post('/move', findGame, async (req, res) => {
+  if (req.game == null) {
+    res.sendStatus(404);
+    return;
+  }
+
   const moveRequest = validateMoveRequest(req.body);
   if (!moveRequest) {
     res.sendStatus(400);
     return;
   }
 
-  const userId = req.session!.userId as string;
-  const game = Object.values(games).find(
-    x => x.darkId === userId || x.lightId === userId,
-  );
+  const { game, userId, userColor } = req;
 
-  if (game == null) {
-    res.sendStatus(404);
-    return;
-  }
-
-  if (
-    (game.darkId === userId && game.currentColor !== dark) ||
-    (game.lightId === userId && game.currentColor !== light)
-  ) {
+  if (userColor !== game.currentColor) {
     res.sendStatus(400);
     return;
   }
@@ -164,7 +181,6 @@ gameRouter.post('/move', async (req, res) => {
   }
 
   if (state === 'done') {
-    delete games[game.id];
     await Promise.all([
       documents
         .update({
