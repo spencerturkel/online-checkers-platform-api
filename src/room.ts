@@ -15,17 +15,38 @@ interface RoomUser {
   timer: NodeJS.Timer;
 }
 
+interface WaitingState {
+  public: boolean;
+  name: 'waiting';
+}
+
+type Decision = 'challenger' | 'opponent' | 'random';
+
+interface DecidingState {
+  name: 'deciding';
+  challengerDecision: Decision;
+  opponent: RoomUser;
+  opponentDecision: Decision;
+  previousWinnerId?: string;
+}
+
+interface PlayingState {
+  name: 'playing';
+  game: Game;
+  opponent: RoomUser;
+}
+
+type RoomState = WaitingState | DecidingState | PlayingState;
+
 interface Room {
   challenger: RoomUser;
-  game?: Game;
-  opponent?: RoomUser;
+  state: RoomState;
 }
 
 declare global {
   namespace Express {
     interface Request {
-      room: Room;
-      roomUser: RoomUser;
+      room?: Room;
     }
   }
 }
@@ -35,24 +56,29 @@ const roomUserTimeout = Number(process.env.ROOM_USER_TIMEOUT) || 30000;
 roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
 
-  if (!req.room) {
+  if (req.room == null) {
     logger.info(`No Room for user ${req.userId}`);
     next();
     return;
   }
 
-  req.roomUser =
+  logger.info('Found Room for user %s', req.userId);
+  logger.debug('Room: %O', req.room);
+
+  const roomUser =
     req.userId === req.room.challenger.id
       ? req.room.challenger
-      : req.room.opponent!;
+      : req.room.state.name === 'waiting'
+        ? null
+        : req.room.state.opponent;
 
-  logger.info(`Room User ${req.roomUser.id}`);
-
-  clearTimeout(req.roomUser.timer);
-  req.roomUser.timer = setTimeout(() => {
-    logger.info(`Timing out user ${req.roomUser.id}`);
-    removeUser(req.room, req.roomUser.id);
-  }, roomUserTimeout);
+  if (roomUser) {
+    clearTimeout(roomUser.timer);
+    roomUser.timer = setTimeout(() => {
+      logger.info(`Timing out user %s`, req.userId);
+      removeUser(req.room!, req.userId);
+    }, roomUserTimeout);
+  }
 
   next();
 });
@@ -69,13 +95,20 @@ roomRouter.post('/create', async (req, res) => {
   const challenger = {
     id: req.userId,
     name: '',
-    timer: setTimeout(() => {
-      logger.info('Timing out user %s', req.userId);
-      removeUser(req.room, req.roomUser.id);
-    }, roomUserTimeout),
+    timer: null!, // will set timer once room created
   };
 
-  roomsByUserId[req.userId] = { challenger };
+  const room: Room = {
+    challenger,
+    state: { name: 'waiting', public: false },
+  };
+
+  roomsByUserId[req.userId] = room;
+
+  room.challenger.timer = setTimeout(() => {
+    logger.info(`Timing out user %s`, req.userId);
+    removeUser(room, req.userId);
+  }, roomUserTimeout);
 
   res.sendStatus(204);
   logger.info('Created room for user %s', challenger.id);
@@ -101,13 +134,13 @@ roomRouter.post('/create', async (req, res) => {
 });
 
 const removeUser = (room: Room, userId: string): void => {
-  if (room.opponent) {
-    if (room.opponent.id === userId) {
-      room.opponent = undefined;
-    } else {
-      room.challenger = room.opponent;
+  if (room.state.name !== 'waiting') {
+    if (room.state.opponent.id !== userId) {
+      room.challenger = room.state.opponent;
       logger.info('User %s became challenger', room.challenger.id);
     }
+
+    room.state = { name: 'waiting', public: false };
   }
 
   delete roomsByUserId[userId];
@@ -132,12 +165,5 @@ roomRouter.get('/', (req, res) => {
     return;
   }
 
-  if (req.room.opponent != null) {
-    if (req.room.opponent.id === req.userId) {
-      res.json({ name: req.room.challenger.name });
-      return;
-    }
-
-    res.json({ name: req.room.opponent.name });
-  }
+  // TODO:
 });
