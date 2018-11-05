@@ -24,9 +24,9 @@ type Decision = 'challenger' | 'opponent' | 'random';
 
 interface DecidingState {
   name: 'deciding';
-  challengerDecision: Decision;
+  challengerDecision?: Decision;
   opponent: RoomUser;
-  opponentDecision: Decision;
+  opponentDecision?: Decision;
   previousWinnerId?: string;
 }
 
@@ -52,6 +52,20 @@ declare global {
 }
 
 const roomUserTimeout = Number(process.env.ROOM_USER_TIMEOUT) || 30000;
+
+const removeUser = (room: Room, userId: string): void => {
+  if (room.state.name !== 'waiting') {
+    if (room.state.opponent.id !== userId) {
+      room.challenger = room.state.opponent;
+      logger.info('User %s became challenger', room.challenger.id);
+    }
+
+    room.state = { name: 'waiting', public: false };
+  }
+
+  delete roomsByUserId[userId];
+  logger.info('Removed user %s from room', userId);
+};
 
 roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
@@ -85,6 +99,27 @@ roomRouter.use((req, res, next) => {
 
 const roomsByUserId = {} as { [userId: string]: Room };
 
+const setRoomUserName = async (user: RoomUser) => {
+  try {
+    user.name = (await documents
+      .get({
+        Key: { userId: user.id },
+        ExpressionAttributeNames: { '#name': 'name' },
+        ProjectionExpression: '#name',
+        TableName: tableName,
+      })
+      .promise()).Item!.name;
+
+    logger.debug('Retrieved name of user %s: %s', user.id, user.name);
+  } catch (e) {
+    logger.error(
+      'Error retrieving name of user %s : %s',
+      user.id,
+      e instanceof Error ? e.message : e,
+    );
+  }
+};
+
 roomRouter.post('/create', async (req, res) => {
   if (req.room != null) {
     logger.debug('Room already created for user %s', req.userId);
@@ -112,40 +147,52 @@ roomRouter.post('/create', async (req, res) => {
 
   res.sendStatus(204);
   logger.info('Created room for user %s', challenger.id);
-
-  try {
-    challenger.name = (await documents
-      .get({
-        Key: { userId: req.userId },
-        ExpressionAttributeNames: { '#name': 'name' },
-        ProjectionExpression: '#name',
-        TableName: tableName,
-      })
-      .promise()).Item!.name;
-
-    logger.debug('Retrieved name of challenger %s', challenger.name);
-  } catch (e) {
-    logger.error(
-      'Error retrieving name of challenger %s : %s',
-      challenger.id,
-      e instanceof Error ? e.message : e,
-    );
-  }
+  setRoomUserName(challenger);
 });
 
-const removeUser = (room: Room, userId: string): void => {
-  if (room.state.name !== 'waiting') {
-    if (room.state.opponent.id !== userId) {
-      room.challenger = room.state.opponent;
-      logger.info('User %s became challenger', room.challenger.id);
+roomRouter.post('/join/:id', async (req, res) => {
+  if (req.room) {
+    if (!req.params.id) {
+      logger.debug(
+        'User %s attempting to join any game, but is already in a room',
+        req.userId,
+      );
+      res.sendStatus(204);
+      return;
     }
 
-    room.state = { name: 'waiting', public: false };
+    logger.info(
+      'User %s attempting to join a specific game, but is already in a room',
+      req.userId,
+    );
+    res.sendStatus(400);
   }
 
-  delete roomsByUserId[userId];
-  logger.info('Removed user %s from room', userId);
-};
+  if (req.params.id) {
+    // TODO: join specific game
+    res.sendStatus(500);
+    return;
+  }
+
+  for (const room of Object.values(roomsByUserId)) {
+    if (room.state.name === 'waiting' && room.state.public) {
+      const opponent = {
+        id: req.userId,
+        name: '',
+        timer: null!,
+      };
+      room.state = {
+        name: 'deciding',
+        opponent,
+      };
+      res.sendStatus(204);
+      setRoomUserName(opponent);
+      return;
+    }
+  }
+
+  res.sendStatus(404);
+});
 
 roomRouter.post('/leave', (req, res) => {
   if (!req.room) {
@@ -165,5 +212,5 @@ roomRouter.get('/', (req, res) => {
     return;
   }
 
-  // TODO:
+  res.json(req.room);
 });
