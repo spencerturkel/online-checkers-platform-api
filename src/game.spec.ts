@@ -1,14 +1,13 @@
 import {
   Color,
+  Coordinate,
   dark,
+  darkKing,
   Game,
   light,
   lightKing,
   MoveRequest,
   Piece,
-  darkKing,
-  Space,
-  Coordinate,
 } from './game';
 
 const lightPlayer = 'p1';

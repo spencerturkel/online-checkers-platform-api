@@ -7,7 +7,7 @@ import morgan from 'morgan';
 
 import { authRouter } from './auth/router';
 import { environment } from './environment';
-import { gameRouter } from './game/router';
+import { roomRouter } from './room';
 import { userRouter } from './user';
 
 const runningInProduction = process.env.NODE_ENV === 'production';
@@ -69,7 +69,7 @@ server.use(
 );
 
 server.use('/auth', authRouter);
-server.use('/game', gameRouter);
+server.use('/room', roomRouter);
 server.use('/user', userRouter);
 
 server.post('/email', async (req, res) => {

@@ -18,3 +18,4 @@ src/**/*.js
 !.elasticbeanstalk/*.global.yml
 
 **/*.env
+**/*.log

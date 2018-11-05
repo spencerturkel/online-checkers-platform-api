@@ -2,7 +2,14 @@ import { RequestHandler, Router } from 'express';
 
 import { authenticate } from './auth/middleware';
 import { documents, tableName } from './dynamo';
-import { dark, Game, light } from './game/game';
+import {
+  Coordinate,
+  dark,
+  Game,
+  light,
+  MoveRequest,
+  MoveResponse,
+} from './game';
 import { logger } from './logger';
 
 export const roomRouter = Router();
@@ -258,4 +265,128 @@ roomRouter.post('/first', requireRoom, (req, res) => {
   }
 
   res.sendStatus(204);
+});
+
+const validateMoveRequest = (body: any): MoveRequest | null => {
+  if (typeof body !== 'object') {
+    return null;
+  }
+
+  const validateCoordinate = (coordinate: any): Coordinate | null => {
+    if (typeof coordinate !== 'object') {
+      return null;
+    }
+
+    if (
+      typeof coordinate.row !== 'number' ||
+      coordinate.row < 0 ||
+      coordinate.row > 7
+    ) {
+      return null;
+    }
+
+    if (
+      typeof coordinate.row !== 'number' ||
+      coordinate.column < 0 ||
+      coordinate.column > 7
+    ) {
+      return null;
+    }
+
+    return { row: coordinate.row, column: coordinate.column };
+  };
+
+  const from = validateCoordinate(body.from);
+
+  if (!from) {
+    return null;
+  }
+
+  const to = validateCoordinate(body.to);
+
+  if (!to) {
+    return null;
+  }
+
+  return { from, to };
+};
+
+roomRouter.post('/move', requireRoom, async (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'playing') {
+    logger.info(
+      'User %s attempted to move in a %s room',
+      req.userId,
+      room.state,
+    );
+    res.sendStatus(400);
+    return;
+  }
+
+  const moveRequest = validateMoveRequest(req.body);
+
+  if (!moveRequest) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const {
+    state: { game },
+  } = room;
+
+  if (
+    game.currentColor === light
+      ? req.userId !== game.lightId
+      : req.userId !== game.darkId
+  ) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const state = game.move(moveRequest);
+
+  if (!state) {
+    res.send(400);
+    return;
+  }
+
+  res.json({ state } as MoveResponse);
+
+  if (state === 'done') {
+    await Promise.all([
+      documents
+        .update({
+          Key: { userId: req.userId },
+          TableName: tableName,
+          UpdateExpression: 'SET wins = wins + :one',
+          ExpressionAttributeValues: { ':one': 1 },
+        })
+        .promise()
+        .catch(e => {
+          logger.error(
+            'Error updating wins of user %s : %s',
+            req.userId,
+            e instanceof Error ? e.message : e,
+          );
+        }),
+      documents
+        .update({
+          Key: {
+            userId: req.userId === game.darkId ? game.lightId : game.darkId,
+          },
+          TableName: tableName,
+          UpdateExpression: 'SET losses = losses + :one',
+          ExpressionAttributeValues: { ':one': 1 },
+        })
+        .promise()
+        .catch(e => {
+          logger.error(
+            'Error updating losses of user %s : %s',
+            req.userId === game.darkId ? game.lightId : game.darkId,
+            e instanceof Error ? e.message : e,
+          );
+        }),
+    ]);
+  }
 });
