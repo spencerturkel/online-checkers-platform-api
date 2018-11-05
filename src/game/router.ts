@@ -48,6 +48,8 @@ const findGame: RequestHandler = (req, res, next) => {
   next();
 };
 
+const userTimeouts: { [userId: string]: NodeJS.Timer } = {};
+
 gameRouter.post('/start', findGame, async (req, res) => {
   let gameId;
 
@@ -62,7 +64,11 @@ gameRouter.post('/start', findGame, async (req, res) => {
     return;
   } else {
     gameId = nextGameId++;
-    currentGames.push(new Game(light, gameId, req.userId, waitingUserId));
+    const game = new Game(light, gameId, req.userId, waitingUserId);
+    currentGames.push(game);
+    userTimeouts[req.userId] = setTimeout(() => {
+      currentGames.splice(currentGames.indexOf(game), 1);
+    }, 30000);
   }
 
   const { opponent } = (await documents
@@ -84,6 +90,10 @@ gameRouter.get('/waiting', findGame, async (req, res) => {
     res.sendStatus(204);
     return;
   }
+
+  userTimeouts[req.userId] = setTimeout(() => {
+    currentGames.splice(currentGames.indexOf(req.game!), 1);
+  }, 30000);
 
   const opponent = (await documents
     .get({
