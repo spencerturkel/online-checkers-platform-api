@@ -154,6 +154,16 @@ gameRouter.get('/turn', findGame, (req, res) => {
   return { isYourTurn, board: isYourTurn ? req.game.board : null };
 });
 
+gameRouter.delete('/', findGame, (req, res, next) => {
+  if (!req.game) {
+    res.sendStatus(404);
+    return;
+  }
+
+  currentGames.splice(currentGames.indexOf(req.game), 1);
+  res.sendStatus(204);
+});
+
 gameRouter.post('/move', findGame, async (req, res) => {
   if (req.game == null) {
     res.sendStatus(404);
