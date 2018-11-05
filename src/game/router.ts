@@ -110,6 +110,18 @@ gameRouter.get('/waiting', findGame, async (req, res) => {
   res.json({ opponent });
 });
 
+gameRouter.post('/keep-alive', findGame, (req, res) => {
+  clearTimeout(userTimeouts[req.userId]);
+
+  if (req.game == null) {
+    res.sendStatus(404);
+  }
+
+  userTimeouts[req.userId] = setTimeout(() => {
+    currentGames.splice(currentGames.indexOf(req.game!), 1);
+  }, 30000);
+});
+
 const validateMoveRequest = (body: any): MoveRequest | null => {
   if (typeof body !== 'object') {
     return null;
