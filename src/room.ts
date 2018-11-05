@@ -2,11 +2,14 @@ import { RequestHandler, Router } from 'express';
 
 import { authenticate } from './auth/middleware';
 import { documents, tableName } from './dynamo';
+import { environment } from './environment';
 import {
   Coordinate,
   dark,
+  darkKing,
   Game,
   light,
+  lightKing,
   MoveRequest,
   MoveResponse,
 } from './game';
@@ -354,6 +357,12 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
   res.json({ state } as MoveResponse);
 
   if (state === 'done') {
+    room.state = {
+      name: 'deciding',
+      opponent: room.state.opponent,
+      previousWinnerId: req.userId,
+    };
+
     await Promise.all([
       documents
         .update({
@@ -390,3 +399,61 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
     ]);
   }
 });
+
+if (!environment.production) {
+  roomRouter.post('/prepare-win', requireRoom, (req, res) => {
+    const room = req.room!;
+
+    if (room.state.name !== 'playing') {
+      res.sendStatus(400);
+      return;
+    }
+
+    const game = room.state.game;
+
+    game.board = [
+      [
+        game.currentColor === light ? lightKing : darkKing,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      [
+        null,
+        game.currentColor === light ? dark : light,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ];
+
+    res.sendStatus(204);
+  });
+
+  roomRouter.post('/set-my-turn', requireRoom, (req, res) => {
+    const room = req.room!;
+
+    if (room.state.name !== 'playing') {
+      res.sendStatus(400);
+      return;
+    }
+
+    room.state.game.currentColor =
+      req.userId === room.state.game.lightId ? light : dark;
+
+    res.sendStatus(204);
+  });
+}
