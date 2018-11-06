@@ -312,7 +312,7 @@ roomRouter.post('/first', requireRoom, (req, res) => {
 
   if (room.state.name !== 'deciding') {
     logger.info('User %s attempted to decide on non-deciding room', req.userId);
-    res.sendStatus(204);
+    res.sendStatus(400);
     return;
   }
 

@@ -168,4 +168,6 @@ describe('room router', () => {
         });
     });
   });
+
+  describe('deciding rooms', () => {});
 });
