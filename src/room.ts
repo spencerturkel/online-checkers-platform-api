@@ -210,10 +210,10 @@ roomRouter.post('/create', async (req, res) => {
 /**
  * Join a room. If the :id parameter is present, attempts to join that room.
  */
-roomRouter.post('/join/:id', async (req, res) => {
+roomRouter.post('/join', async (req, res) => {
   if (req.room) {
-    if (!req.params.id) {
-      logger.debug(
+    if (typeof req.body !== 'object' || !req.body.id) {
+      logger.info(
         'User %s attempting to join any game, but is already in a room',
         req.userId,
       );
@@ -228,7 +228,7 @@ roomRouter.post('/join/:id', async (req, res) => {
     res.sendStatus(400);
   }
 
-  if (req.params.id) {
+  if (typeof req.body === 'object' && req.body.id) {
     // TODO: join specific game
     res.sendStatus(500);
     return;
