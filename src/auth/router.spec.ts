@@ -1,15 +1,12 @@
-import 'dotenv/config';
-import request, { SuperTest, Test } from 'supertest';
+import { SuperTest, Test } from 'supertest';
 
-import server from '../server';
-
-const testUserId = 'supertest user';
+import { createSuperTest, testUserId } from '../supertest';
 
 describe('auth router', () => {
   let test: SuperTest<Test>;
 
   beforeEach(() => {
-    test = request.agent(server);
+    test = createSuperTest();
   });
 
   it('authenticates at /local', async () => {
