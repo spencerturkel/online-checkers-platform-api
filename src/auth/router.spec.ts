@@ -1,6 +1,4 @@
-import { SuperTest, Test } from 'supertest';
-
-import { createSuperTest, testUserId } from '../supertest';
+import { createSuperTest, SuperTest, Test, testUserId } from '../supertest';
 
 describe('auth router', () => {
   let test: SuperTest<Test>;

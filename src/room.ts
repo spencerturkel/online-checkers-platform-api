@@ -1,3 +1,10 @@
+/**
+ * This module defines the Express Router for rooms.
+ *
+ * Rooms are where users wait for opponents, decide on who will be first,
+ * and play games.
+ */
+
 import { RequestHandler, Router } from 'express';
 
 import { authenticate } from './auth/middleware';
@@ -19,27 +26,48 @@ export const roomRouter = Router();
 
 roomRouter.use(authenticate);
 
+/**
+ * The user present in the Room.
+ */
 interface RoomUser {
   id: string;
   name: string;
+  /**
+   * When this timer expires, the user will be removed from the Room.
+   */
   timer: NodeJS.Timer;
 }
 
+/**
+ * The Room state where a user is waiting for an opponent.
+ */
 interface WaitingState {
+  /**
+   * Whether the waiting user wants to be matched with the public.
+   */
   public: boolean;
   name: 'waiting';
 }
 
 type Decision = 'challenger' | 'opponent' | 'random';
 
+/**
+ * The Room state where the users are deciding who will go first.
+ */
 interface DecidingState {
   name: 'deciding';
   challengerDecision?: Decision;
   opponent: RoomUser;
   opponentDecision?: Decision;
+  /**
+   * The ID of the user who won the previous game, if any.
+   */
   previousWinnerId?: string;
 }
 
+/**
+ * The Room state where the users are playing a game.
+ */
 interface PlayingState {
   name: 'playing';
   game: Game;
@@ -56,13 +84,27 @@ interface Room {
 declare global {
   namespace Express {
     interface Request {
+      /**
+       * The Room of the requesting user.
+       */
       room?: Room;
     }
   }
 }
 
+const roomsByUserId = {} as { [userId: string]: Room };
+
+/**
+ * After this amount of milliseconds passes without interaction by a RoomUser,
+ * that RoomUser will be removed from their Room.
+ */
 const roomUserTimeout = Number(process.env.ROOM_USER_TIMEOUT) || 30000;
 
+/**
+ * Remove a user from a room.
+ * @param room the room to remove the user from
+ * @param userId the user to be removed
+ */
 const removeUser = (room: Room, userId: string): void => {
   if (room.state.name !== 'waiting') {
     if (room.state.opponent.id !== userId) {
@@ -81,7 +123,7 @@ roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
 
   if (req.room == null) {
-    logger.info(`No Room for user ${req.userId}`);
+    logger.info('No Room for user %s', req.userId);
     next();
     return;
   }
@@ -107,9 +149,11 @@ roomRouter.use((req, res, next) => {
   next();
 });
 
-const roomsByUserId = {} as { [userId: string]: Room };
-
-const setRoomUserName = async (user: RoomUser) => {
+/**
+ * Sets the name of a RoomUser from DynamoDB.
+ * @param user the RoomUser whose name will be set
+ */
+const setRoomUserName = async (user: RoomUser): Promise<void> => {
   try {
     user.name = (await documents
       .get({
@@ -130,6 +174,9 @@ const setRoomUserName = async (user: RoomUser) => {
   }
 };
 
+/**
+ * Create a room for the requesting user.
+ */
 roomRouter.post('/create', async (req, res) => {
   if (req.room != null) {
     logger.debug('Room already created for user %s', req.userId);
@@ -160,6 +207,9 @@ roomRouter.post('/create', async (req, res) => {
   setRoomUserName(challenger);
 });
 
+/**
+ * Join a room. If the :id parameter is present, attempts to join that room.
+ */
 roomRouter.post('/join/:id', async (req, res) => {
   if (req.room) {
     if (!req.params.id) {
@@ -205,14 +255,48 @@ roomRouter.post('/join/:id', async (req, res) => {
   res.sendStatus(404);
 });
 
+/**
+ * Requires that the room is present in the request.
+ */
 const requireRoom: RequestHandler = (req, res, next) => {
   if (!req.room) {
-    logger.debug('User %s attempted to act on non-existent room', req.userId);
+    logger.info('User %s attempted to act on non-existent room', req.userId);
     res.sendStatus(404);
   } else {
+    logger.info('Room for User %s', req.userId);
     next();
   }
 };
+
+/**
+ * Set a waiting room to be public.
+ */
+roomRouter.post('/publish', requireRoom, (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'waiting') {
+    res.sendStatus(400);
+    return;
+  }
+
+  room.state.public = true;
+  res.sendStatus(204);
+});
+
+/**
+ * Set a waiting room to be private.
+ */
+roomRouter.post('/privatize', requireRoom, (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'waiting') {
+    res.sendStatus(400);
+    return;
+  }
+
+  room.state.public = false;
+  res.sendStatus(204);
+});
 
 roomRouter.post('/leave', requireRoom, (req, res) => {
   removeUser(req.room!, req.userId);
