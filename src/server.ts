@@ -54,19 +54,21 @@ server.use(
 
 const morganFormat = environment.production ? 'combined' : 'dev';
 
-server.use(
-  morgan(morganFormat, {
-    skip: (req, res) => res.statusCode < 400,
-    stream: process.stderr,
-  }),
-);
+if (!('__TEST__' in global)) {
+  server.use(
+    morgan(morganFormat, {
+      skip: (req, res) => res.statusCode < 400,
+      stream: process.stderr,
+    }),
+  );
 
-server.use(
-  morgan(morganFormat, {
-    skip: (req, res) => res.statusCode >= 400,
-    stream: process.stdout,
-  }),
-);
+  server.use(
+    morgan(morganFormat, {
+      skip: (req, res) => res.statusCode >= 400,
+      stream: process.stdout,
+    }),
+  );
+}
 
 server.use('/auth', authRouter);
 server.use('/room', roomRouter);

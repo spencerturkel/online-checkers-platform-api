@@ -4,6 +4,7 @@ module.exports = {
     '^.+\\.ts$': 'ts-jest',
   },
   globals: {
+    __TEST__: true,
     'ts-jest': { tsConfig: 'tsconfig.json' },
   },
   transform: {
