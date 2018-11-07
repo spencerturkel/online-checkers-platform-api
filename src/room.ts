@@ -286,14 +286,18 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
   const link =
     'https://onlinecheckersplatform.com/join/' + room.state.invitationToken;
 
-  await sgMail.send({
-    to: req.body.email,
-    from: 'noreply@onlinecheckersplatform.com',
-    subject: `${req.userName} invited you to play checkers!`,
-    text: `Go to ${link} to play!`,
-  });
-
-  res.sendStatus(204);
+  try {
+    await sgMail.send({
+      to: req.body.email,
+      from: 'noreply@onlinecheckersplatform.com',
+      subject: `${req.userName} invited you to play checkers!`,
+      text: `Go to ${link} to play!`,
+    });
+    res.json({ emailSent: true });
+  } catch (e) {
+    logger.error('SendGrid error: %s', e);
+    res.json({ emailSent: false });
+  }
 
   logger.info('Invitation from %s to %s', req.userId, req.body.email);
 });

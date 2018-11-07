@@ -140,7 +140,7 @@ describe('room router', () => {
       await clientOne
         .post('/room/invite')
         .send({ email: 'bit-bucket@test.smtp.org' })
-        .expect(204);
+        .expect(200);
       await clientTwo.post('/room/join').expect(404);
     });
 
@@ -149,7 +149,7 @@ describe('room router', () => {
       await clientOne
         .post('/room/invite')
         .send({ email: 'bit-bucket@test.smtp.org' })
-        .expect(204);
+        .expect(200);
       await clientOne.delete('/room/invite').expect(204);
       await clientTwo.post('/room/join/').expect(204);
       await clientOne
@@ -176,7 +176,7 @@ describe('room router', () => {
       await clientOne
         .post('/room/invite')
         .send({ email: 'bit-bucket@test.smtp.org' })
-        .expect(204);
+        .expect(200);
 
       const token = await clientOne.get('/room').then(
         ({
