@@ -11,33 +11,30 @@ describe('room router', () => {
   let testTwo: SuperTest<Test>;
   let testThree: SuperTest<Test>;
 
-  describe('creating rooms', () => {
-    beforeEach(() => {
-      testOne = createSuperTest();
-      testTwo = createSuperTest();
-      testThree = createSuperTest();
-    });
+  beforeAll(async () => {
+    testOne = createSuperTest();
+    testTwo = createSuperTest();
+    testThree = createSuperTest();
 
+    await Promise.all([
+      testOne.post('/auth/local').send({ id: testUserId }),
+      testTwo.post('/auth/local').send({ id: secondTestUserId }),
+      testThree.post('/auth/local').send({ id: thirdTestUserId }),
+    ]);
+  });
+
+  describe('creating rooms', () => {
     it('requires authentication', async () => {
-      await testOne.post('/room/create').expect(403);
+      await testOne.delete('/auth');
+
+      try {
+        await testOne.post('/room/create').expect(403);
+      } finally {
+        await testOne.post('/auth/local').send({ id: testUserId });
+      }
     });
 
     it('can create many rooms', async () => {
-      await Promise.all([
-        testOne
-          .post('/auth/local')
-          .send({ id: testUserId })
-          .expect(201),
-        testTwo
-          .post('/auth/local')
-          .send({ id: secondTestUserId })
-          .expect(201),
-        testThree
-          .post('/auth/local')
-          .send({ id: thirdTestUserId })
-          .expect(201),
-      ]);
-
       await Promise.all([
         testOne.post('/room/create').expect(204),
         testTwo.post('/room/create').expect(204),
@@ -74,21 +71,7 @@ describe('room router', () => {
 
   describe('waiting rooms', () => {
     beforeEach(async () => {
-      testOne = createSuperTest();
-      testTwo = createSuperTest();
-      testThree = createSuperTest();
-
-      Promise.all([
-        await testOne
-          .post('/auth/local')
-          .send({ id: testUserId })
-          .expect(201)
-          .then(() => testOne.post('/room/create').expect(204)),
-        await testTwo
-          .post('/auth/local')
-          .send({ id: secondTestUserId })
-          .expect(201),
-      ]);
+      await testOne.post('/room/create');
     });
 
     it('will delete the room after leaving', async () => {
@@ -169,5 +152,44 @@ describe('room router', () => {
     });
   });
 
-  describe('deciding rooms', () => {});
+  describe('deciding rooms', () => {
+    beforeAll(async () => {
+      await testOne.post('/room/create');
+      await testOne.post('/room/publish');
+      await testTwo.post('/room/join');
+    });
+
+    test.each`
+      challengerDecision | opponentDecision
+      ${'challenger'}    | ${'opponent'}
+    `(
+      'challenger may decide $challengerDecision while opponent decides $opponentDecision',
+      async ({ challengerDecision, opponentDecision }) => {
+        await Promise.all([
+          testOne
+            .post('/room/first')
+            .send({ decision: challengerDecision })
+            .expect(204),
+          testTwo
+            .post('/room/first')
+            .send({ decision: opponentDecision })
+            .expect(204),
+        ]);
+        await testOne
+          .get('/room/')
+          .expect(200)
+          .expect(({ body }) => {
+            expect(body).toEqual(
+              expect.objectContaining({
+                state: expect.objectContaining({
+                  name: 'deciding',
+                  challengerDecision,
+                  opponentDecision,
+                }),
+              }),
+            );
+          });
+      },
+    );
+  });
 });
