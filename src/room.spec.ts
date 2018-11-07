@@ -136,6 +136,42 @@ describe('room router', () => {
       await clientTwo.post('/room/join').expect(404);
     });
 
+    it('may not be joined by anyone if there was an invitation', async () => {
+      await clientOne
+        .post('/room/invite')
+        .send({ email: 'bit-bucket@test.smtp.org' })
+        .expect(204);
+      await clientTwo.post('/room/join').expect(404);
+    });
+
+    it('may be joined by anyone after deleting the invitation', async () => {
+      await clientOne.post('/room/publish').expect(204);
+      await clientOne
+        .post('/room/invite')
+        .send({ email: 'bit-bucket@test.smtp.org' })
+        .expect(204);
+      await clientOne.delete('/room/invite').expect(204);
+      await clientTwo.post('/room/join/').expect(204);
+      await clientOne
+        .get('/room')
+        .expect(200)
+        .expect(({ body }) => {
+          expect(body).toEqual(
+            expect.objectContaining({
+              challenger: expect.objectContaining({
+                id: testUserId,
+              }),
+              state: expect.objectContaining({
+                name: 'deciding',
+                opponent: expect.objectContaining({
+                  id: secondTestUserId,
+                }),
+              }),
+            }),
+          );
+        });
+    });
+
     it('may be joined using the invitation token after inviting', async () => {
       await clientOne
         .post('/room/invite')

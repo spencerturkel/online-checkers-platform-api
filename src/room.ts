@@ -135,7 +135,6 @@ roomRouter.use((req, res, next) => {
   }
 
   logger.info('Found Room for user %s', req.userId);
-  logger.debug('Room: %O', req.room);
 
   const roomUser =
     req.userId === req.room.challenger.id
@@ -154,31 +153,6 @@ roomRouter.use((req, res, next) => {
 
   next();
 });
-
-/**
- * Sets the name of a RoomUser from DynamoDB.
- * @param user the RoomUser whose name will be set
- */
-const setRoomUserName = async (user: RoomUser): Promise<void> => {
-  try {
-    user.name = (await documents
-      .get({
-        Key: { userId: user.id },
-        ExpressionAttributeNames: { '#name': 'name' },
-        ProjectionExpression: '#name',
-        TableName: tableName,
-      })
-      .promise()).Item!.name;
-
-    logger.debug('Retrieved name of user %s: %s', user.id, user.name);
-  } catch (e) {
-    logger.error(
-      'Error retrieving name of user %s : %s',
-      user.id,
-      e instanceof Error ? e.message : e,
-    );
-  }
-};
 
 /**
  * Create a room for the requesting user.
@@ -210,7 +184,6 @@ roomRouter.post('/create', async (req, res) => {
 
   res.sendStatus(204);
   logger.info('Created room for user %s', challenger.id);
-  setRoomUserName(challenger);
 });
 
 /**
@@ -258,7 +231,6 @@ roomRouter.post('/join', async (req, res) => {
       };
       roomsByUserId[req.userId] = room;
       res.sendStatus(204);
-      setRoomUserName(opponent);
       return;
     }
   }
@@ -274,10 +246,25 @@ const requireRoom: RequestHandler = (req, res, next) => {
     logger.info('User %s attempted to act on non-existent room', req.userId);
     res.sendStatus(404);
   } else {
-    logger.info('Room for User %s', req.userId);
     next();
   }
 };
+
+roomRouter.delete('/invite', requireRoom, async (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'waiting') {
+    logger.info('Attempted to delete invitation from non-waiting room');
+    res.sendStatus(400);
+    return;
+  }
+
+  delete room.state.invitationToken;
+
+  res.sendStatus(204);
+
+  logger.info('Deleted invitation from user %s', req.userId);
+});
 
 roomRouter.post('/invite', requireRoom, async (req, res) => {
   const room = req.room!;
@@ -307,6 +294,8 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
   });
 
   res.sendStatus(204);
+
+  logger.info('Invitation from %s to %s', req.userId, req.body.email);
 });
 
 /**
