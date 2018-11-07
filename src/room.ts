@@ -5,6 +5,8 @@
  * and play games.
  */
 
+import { MailData } from '@sendgrid/helpers/classes/mail';
+import sgMail from '@sendgrid/mail';
 import { RequestHandler, Router } from 'express';
 
 import { authenticate } from './auth/middleware';
@@ -186,7 +188,7 @@ roomRouter.post('/create', async (req, res) => {
 
   const challenger = {
     id: req.userId,
-    name: '',
+    name: '', // FIXME:
     timer: null!, // will set timer once room created
   };
 
@@ -208,7 +210,7 @@ roomRouter.post('/create', async (req, res) => {
 });
 
 /**
- * Join a room. If the :id parameter is present, attempts to join that room.
+ * Join a public room.
  */
 roomRouter.post('/join', async (req, res) => {
   if (req.room) {
@@ -228,19 +230,14 @@ roomRouter.post('/join', async (req, res) => {
     res.sendStatus(400);
   }
 
-  if (typeof req.body === 'object' && req.body.id) {
-    // TODO: join specific game
-    res.sendStatus(500);
-    return;
-  }
-
   for (const room of Object.values(roomsByUserId)) {
     if (room.state.name === 'waiting' && room.state.public) {
       const opponent = {
         id: req.userId,
-        name: '',
+        name: '', // FIXME:
         timer: null!,
       };
+
       room.state = {
         challengerDecision: null,
         name: 'deciding',
@@ -269,6 +266,35 @@ const requireRoom: RequestHandler = (req, res, next) => {
     next();
   }
 };
+
+let email: MailData | null = null;
+
+roomRouter.post('/invite', requireRoom, async (req, res) => {
+  if (req.room!.state.name !== 'waiting') {
+    logger.info('Attempted to invite from non-waiting room');
+    res.sendStatus(400);
+    return;
+  }
+
+  if (!req.body || typeof req.body.email !== 'string') {
+    logger.info('Bad body posted to /invite: %O', req.body);
+    res.sendStatus(400);
+    return;
+  }
+
+  const userName = ''; // TODO:
+  const link = ''; // TODO:
+  email = {
+    to: req.body.email,
+    from: 'noreply@onlinecheckersplatform.com',
+    subject: `${userName} invited you to play checkers!`,
+    text: `Click ${link} to play!`,
+  };
+
+  await sgMail.send(email);
+
+  res.sendStatus(204);
+});
 
 /**
  * Set a waiting room to be public.
@@ -564,5 +590,9 @@ if (!environment.production) {
       req.userId === room.state.game.lightId ? light : dark;
 
     res.sendStatus(204);
+  });
+
+  roomRouter.get('/last-email', (req, res) => {
+    res.json({ email });
   });
 }

@@ -74,15 +74,4 @@ server.use('/auth', authRouter);
 server.use('/room', roomRouter);
 server.use('/user', userRouter);
 
-server.post('/email', async (req, res) => {
-  await sgMail.send({
-    to: req.body.to,
-    from: 'noreply@onlinecheckersplatform.com',
-    subject: req.body.subject,
-    text: req.body.text,
-  });
-
-  res.sendStatus(204);
-});
-
 export default server;
