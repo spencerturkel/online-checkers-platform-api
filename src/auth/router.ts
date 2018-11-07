@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import uuid from 'uuid/v4';
 
 import { documents, tableName } from '../dynamo';
 import { environment } from '../environment';
@@ -25,6 +26,7 @@ if (!environment.production) {
     }
 
     const userId = req.body.id as string;
+    const name = `Local User ${userId}`;
 
     await documents
       .put({
@@ -32,7 +34,7 @@ if (!environment.production) {
         Item: {
           userId,
           isPremium: req.body.isPremium || false,
-          name: `Local User ${userId}`,
+          name,
           wins: 0,
           losses: 0,
         },
@@ -45,6 +47,7 @@ if (!environment.production) {
         }
       });
 
+    req.session!.name = name;
     req.session!.userId = userId;
     res.sendStatus(201);
   });
@@ -77,14 +80,57 @@ authRouter.post('/google', async (req, res) => {
       TableName: tableName,
     })
     .promise()
-    .catch(() => {});
+    .catch(e => {
+      if (e.code !== 'ConditionalCheckFailedException') {
+        throw e;
+      }
+    });
 
+  req.session!.name = user.name;
+  req.session!.userId = user.userId;
+
+  res.sendStatus(201);
+});
+
+authRouter.post('/guest', async (req, res) => {
+  if (typeof req.body.name !== 'string') {
+    res.sendStatus(400);
+    return;
+  }
+
+  const userId = uuid();
+  const user: User = {
+    userId,
+    isPremium: false,
+    name: req.body.name,
+    wins: 0,
+    losses: 0,
+  };
+
+  await documents
+    .put({
+      Item: user,
+      TableName: tableName,
+    })
+    .promise();
+
+  req.session!.isGuest = true;
+  req.session!.name = req.body.name;
   req.session!.userId = user.userId;
 
   res.sendStatus(201);
 });
 
 authRouter.delete('/', authenticate, (req, res, next) => {
+  if (req.session!.isGuest) {
+    documents
+      .delete({
+        Key: { userId: req.userId },
+        TableName: tableName,
+      })
+      .send();
+  }
+
   req.session!.destroy(err => {
     if (err) {
       return next(err);

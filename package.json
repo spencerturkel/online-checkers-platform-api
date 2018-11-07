@@ -25,6 +25,7 @@
     "helmet": "^3.13.0",
     "morgan": "^1.9.1",
     "stripe": "^6.13.0",
+    "uuid": "^3.3.2",
     "winston": "^3.1.0"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/node": "^8.10.30",
     "@types/stripe": "^6.0.3",
     "@types/supertest": "^2.0.6",
+    "@types/uuid": "^3.4.4",
     "concurrently": "^4.0.1",
     "jest": "^23.6.0",
     "lint-staged": "^7.2.2",
