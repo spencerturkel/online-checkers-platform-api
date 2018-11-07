@@ -2,6 +2,7 @@ import { roomRouter } from './room';
 import { createSuperTest, SuperTest, Test, testUserId } from './supertest';
 
 jest.useFakeTimers();
+jest.setTimeout(7000);
 
 const secondTestUserId = 'supertest user 2';
 const thirdTestUserId = 'supertest user 3';
@@ -159,37 +160,69 @@ describe('room router', () => {
       await clientTwo.post('/room/join');
     });
 
-    test.each`
-      challengerDecision | opponentDecision
-      ${'challenger'}    | ${'opponent'}
-    `(
-      'challenger may decide $challengerDecision while opponent decides $opponentDecision',
-      async ({ challengerDecision, opponentDecision }) => {
-        await Promise.all([
-          clientOne
-            .post('/room/first')
-            .send({ decision: challengerDecision })
-            .expect(204),
-          clientTwo
-            .post('/room/first')
-            .send({ decision: opponentDecision })
-            .expect(204),
-        ]);
-        await clientOne
-          .get('/room/')
-          .expect(200)
-          .expect(({ body }) => {
-            expect(body).toEqual(
-              expect.objectContaining({
-                state: expect.objectContaining({
-                  name: 'deciding',
-                  challengerDecision,
-                  opponentDecision,
-                }),
+    test('decisions may be deleted', async () => {
+      await clientOne.post('/room/decision').send({ decision: 'challenger' });
+      await clientOne.delete('/room/decision').expect(204);
+      await clientOne
+        .get('/room')
+        .expect(200)
+        .expect(({ body }) => {
+          expect(body).toEqual(
+            expect.objectContaining({
+              state: expect.objectContaining({
+                name: 'deciding',
+                challengerDecision: null,
               }),
-            );
-          });
-      },
-    );
+            }),
+          );
+        });
+    });
+
+    describe('disagreements', () => {
+      afterEach(async () => {
+        await Promise.all([
+          clientOne.delete('/room/decision'),
+          clientTwo.delete('/room/decision'),
+        ]);
+      });
+
+      test.each`
+        challengerDecision | opponentDecision
+        ${'challenger'}    | ${'opponent'}
+        ${'challenger'}    | ${'random'}
+        ${'opponent'}      | ${'challenger'}
+        ${'opponent'}      | ${'random'}
+        ${'random'}        | ${'opponent'}
+        ${'random'}        | ${'challenger'}
+      `(
+        '$challengerDecision != $opponentDecision',
+        async ({ challengerDecision, opponentDecision }) => {
+          await Promise.all([
+            clientOne
+              .post('/room/decision')
+              .send({ decision: challengerDecision })
+              .expect(204),
+            clientTwo
+              .post('/room/decision')
+              .send({ decision: opponentDecision })
+              .expect(204),
+          ]);
+          await clientOne
+            .get('/room/')
+            .expect(200)
+            .expect(({ body }) => {
+              expect(body).toEqual(
+                expect.objectContaining({
+                  state: expect.objectContaining({
+                    name: 'deciding',
+                    challengerDecision,
+                    opponentDecision,
+                  }),
+                }),
+              );
+            });
+        },
+      );
+    });
   });
 });

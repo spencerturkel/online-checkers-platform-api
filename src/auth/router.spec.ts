@@ -7,25 +7,29 @@ describe('auth router', () => {
     test = createSuperTest();
   });
 
-  it('authenticates at /local', async () => {
-    await test.get('/user').expect(403);
-    await test
-      .post('/auth/local')
-      .send({ id: testUserId })
-      .expect(201);
-    await test
-      .get('/user')
-      .expect(200)
-      .expect(res => {
-        expect(res.body).toEqual(
-          expect.objectContaining({
-            name: expect.stringContaining(testUserId),
-            userId: testUserId,
-          }),
-        );
-        expect(typeof res.body.isPremium).toBe('boolean');
-        expect(res.body.wins).toBeGreaterThanOrEqual(0);
-        expect(res.body.losses).toBeGreaterThanOrEqual(0);
-      });
-  });
+  it(
+    'authenticates at /local',
+    async () => {
+      await test.get('/user').expect(403);
+      await test
+        .post('/auth/local')
+        .send({ id: testUserId })
+        .expect(201);
+      await test
+        .get('/user')
+        .expect(200)
+        .expect(res => {
+          expect(res.body).toEqual(
+            expect.objectContaining({
+              name: expect.stringContaining(testUserId),
+              userId: testUserId,
+            }),
+          );
+          expect(typeof res.body.isPremium).toBe('boolean');
+          expect(res.body.wins).toBeGreaterThanOrEqual(0);
+          expect(res.body.losses).toBeGreaterThanOrEqual(0);
+        });
+    },
+    10000,
+  );
 });

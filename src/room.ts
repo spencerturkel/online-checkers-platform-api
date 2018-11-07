@@ -56,9 +56,9 @@ type Decision = 'challenger' | 'opponent' | 'random';
  */
 interface DecidingState {
   name: 'deciding';
-  challengerDecision?: Decision;
+  challengerDecision: Decision | null;
   opponent: RoomUser;
-  opponentDecision?: Decision;
+  opponentDecision: Decision | null;
   /**
    * The ID of the user who won the previous game, if any.
    */
@@ -242,8 +242,10 @@ roomRouter.post('/join', async (req, res) => {
         timer: null!,
       };
       room.state = {
+        challengerDecision: null,
         name: 'deciding',
         opponent,
+        opponentDecision: null,
       };
       roomsByUserId[req.userId] = room;
       res.sendStatus(204);
@@ -307,7 +309,28 @@ roomRouter.get('/', requireRoom, (req, res) => {
   res.json(req.room);
 });
 
-roomRouter.post('/first', requireRoom, (req, res) => {
+roomRouter.delete('/decision', requireRoom, (req, res) => {
+  const room = req.room!;
+
+  if (room.state.name !== 'deciding') {
+    logger.info(
+      'User %s attempted to delete decision on non-deciding room',
+      req.userId,
+    );
+    res.sendStatus(400);
+    return;
+  }
+
+  if (req.userId === room.challenger.id) {
+    room.state.challengerDecision = null;
+  } else {
+    room.state.opponentDecision = null;
+  }
+
+  res.sendStatus(204);
+});
+
+roomRouter.post('/decision', requireRoom, (req, res) => {
   const room = req.room!;
 
   if (room.state.name !== 'deciding') {
@@ -442,8 +465,10 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
 
   if (state === 'done') {
     room.state = {
+      challengerDecision: null,
       name: 'deciding',
       opponent: room.state.opponent,
+      opponentDecision: null,
       previousWinnerId: req.userId,
     };
 
