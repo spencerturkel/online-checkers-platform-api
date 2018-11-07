@@ -1,5 +1,6 @@
 import { roomRouter } from './room';
 import { createSuperTest, SuperTest, Test, testUserId } from './supertest';
+import { light, dark } from './game';
 
 jest.useFakeTimers();
 jest.setTimeout(7000);
@@ -176,6 +177,54 @@ describe('room router', () => {
             }),
           );
         });
+    });
+
+    describe('agreements', () => {
+      test.each`
+        decision        | firstColor
+        ${'challenger'} | ${dark}
+        ${'opponent'}   | ${light}
+      `(
+        'both deciding $decision lets that player go first',
+        async ({ decision, firstColor }) => {
+          await Promise.all([
+            clientOne
+              .post('/room/decision')
+              .send({ decision })
+              .expect(204),
+            clientTwo
+              .post('/room/decision')
+              .send({ decision })
+              .expect(204),
+          ]);
+
+          await clientOne
+            .get('/room')
+            .expect(200)
+            .expect(({ body }) => {
+              expect(body).toEqual(
+                expect.objectContaining({
+                  state: expect.objectContaining({
+                    name: 'playing',
+                    game: expect.objectContaining({
+                      currentColor: firstColor,
+                    }),
+                  }),
+                }),
+              );
+            });
+        },
+      );
+
+      afterEach(async () => {
+        await Promise.all([
+          clientOne.post('/room/leave'),
+          clientTwo.post('/room/leave'),
+        ]);
+        await clientOne.post('/room/create');
+        await clientOne.post('/room/publish');
+        await clientTwo.post('/room/join');
+      });
     });
 
     describe('disagreements', () => {
