@@ -160,8 +160,65 @@ describe('room router', () => {
       await clientTwo.post('/room/join');
     });
 
+    describe('leaving', () => {
+      afterEach(async () => {
+        await Promise.all([
+          clientOne
+            .post('/room/leave')
+            .then(() => clientOne.post('/room/create'))
+            .then(() => clientOne.post('/room/publish')),
+          clientTwo.post('/room/leave'),
+        ]);
+
+        await clientTwo.post('/room/join');
+      });
+
+      it('allows the challenger to leave', async () => {
+        await clientTwo.post('/room/leave').expect(204);
+        await clientOne
+          .get('/room')
+          .expect(200)
+          .expect(({ body }) =>
+            expect(body).toEqual(
+              expect.objectContaining({
+                challenger: expect.objectContaining({
+                  id: testUserId,
+                }),
+                state: {
+                  public: false,
+                  name: 'waiting',
+                },
+              }),
+            ),
+          );
+      });
+
+      it('allows the opponent to leave', async () => {
+        await clientOne.post('/room/leave').expect(204);
+        await clientTwo
+          .get('/room')
+          .expect(200)
+          .expect(({ body }) =>
+            expect(body).toEqual(
+              expect.objectContaining({
+                challenger: expect.objectContaining({
+                  id: secondTestUserId,
+                }),
+                state: {
+                  public: false,
+                  name: 'waiting',
+                },
+              }),
+            ),
+          );
+      });
+    });
+
     test('decisions may be deleted', async () => {
-      await clientOne.post('/room/decision').send({ decision: 'challenger' });
+      await clientOne
+        .post('/room/decision')
+        .send({ decision: 'challenger' })
+        .expect(204);
       await clientOne.delete('/room/decision').expect(204);
       await clientOne
         .get('/room')
@@ -288,6 +345,46 @@ describe('room router', () => {
     afterEach(async () => {
       await clientTwo.post('/room/leave');
       await clientOne.post('/room/leave');
+    });
+
+    it('allows the challenger to leave', async () => {
+      await clientTwo.post('/room/leave').expect(204);
+      await clientOne
+        .get('/room')
+        .expect(200)
+        .expect(({ body }) =>
+          expect(body).toEqual(
+            expect.objectContaining({
+              challenger: expect.objectContaining({
+                id: testUserId,
+              }),
+              state: {
+                public: false,
+                name: 'waiting',
+              },
+            }),
+          ),
+        );
+    });
+
+    it('allows the opponent to leave', async () => {
+      await clientOne.post('/room/leave').expect(204);
+      await clientTwo
+        .get('/room')
+        .expect(200)
+        .expect(({ body }) =>
+          expect(body).toEqual(
+            expect.objectContaining({
+              challenger: expect.objectContaining({
+                id: secondTestUserId,
+              }),
+              state: {
+                public: false,
+                name: 'waiting',
+              },
+            }),
+          ),
+        );
     });
 
     it("prevents light from moving dark pieces on dark's turn", async () => {
