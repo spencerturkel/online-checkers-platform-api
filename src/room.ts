@@ -341,6 +341,10 @@ roomRouter.get('/', requireRoom, (req, res) => {
   res.json(req.room);
 });
 
+roomRouter.head('/', requireRoom, (req, res) => {
+  res.sendStatus(200);
+});
+
 roomRouter.delete('/decision', requireRoom, (req, res) => {
   const room = req.room!;
 
