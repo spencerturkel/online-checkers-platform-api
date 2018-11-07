@@ -1,6 +1,5 @@
 import {
   Color,
-  Coordinate,
   dark,
   darkKing,
   Game,
@@ -14,10 +13,6 @@ const lightPlayer = 'p1';
 const darkPlayer = 'p2';
 
 let game: Game;
-
-const colorsAndNames = [[light, 'light'], [dark, 'dark']] as Array<
-  [Color, string]
->;
 
 describe('basic moves', () => {
   beforeEach(() => {
@@ -475,6 +470,64 @@ describe('promotion', () => {
       Array(8).fill(null),
       Array(8).fill(null),
       [light, darkKing, null, null, null, null, null, null],
+    ]);
+  });
+
+  test('light kings may win', () => {
+    game.board = [
+      [lightKing, null, null, null, null, null, null, null],
+      [null, dark, null, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 0, column: 0 }, to: { row: 2, column: 2 } }),
+    ).toBe('win');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, lightKing, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+  });
+
+  test('dark kings may win', () => {
+    game.currentColor = dark;
+
+    game.board = [
+      [darkKing, null, null, null, null, null, null, null],
+      [null, light, null, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 0, column: 0 }, to: { row: 2, column: 2 } }),
+    ).toBe('win');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, darkKing, null, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
     ]);
   });
 });

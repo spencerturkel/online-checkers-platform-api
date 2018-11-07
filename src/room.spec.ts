@@ -1,6 +1,5 @@
-import { roomRouter } from './room';
+import { dark, light } from './game';
 import { createSuperTest, SuperTest, Test, testUserId } from './supertest';
-import { light, dark } from './game';
 
 jest.useFakeTimers();
 jest.setTimeout(7000);
@@ -273,5 +272,84 @@ describe('room router', () => {
         },
       );
     });
+  });
+
+  describe('game rooms', () => {
+    beforeEach(async () => {
+      await clientOne.post('/room/create');
+      await clientOne.post('/room/publish');
+      await clientTwo.post('/room/join');
+      await Promise.all([
+        clientOne.post('/room/decision').send({ decision: 'challenger' }),
+        clientTwo.post('/room/decision').send({ decision: 'challenger' }),
+      ]);
+    });
+
+    afterEach(async () => {
+      await clientTwo.post('/room/leave');
+      await clientOne.post('/room/leave');
+    });
+
+    it("prevents light from moving dark pieces on dark's turn", async () => {
+      await clientTwo
+        .post('/room/move')
+        .send({ from: { row: 5, column: 0 }, to: { row: 4, column: 1 } })
+        .expect(400);
+    });
+
+    it("prevents dark from moving light pieces on light's turn", async () => {
+      await clientOne
+        .post('/room/move')
+        .send({ from: { row: 2, column: 1 }, to: { row: 3, column: 0 } })
+        .expect(200);
+      await clientOne
+        .post('/room/move')
+        .send({ from: { row: 5, column: 0 }, to: { row: 4, column: 1 } })
+        .expect(400);
+    });
+
+    it.each`
+      colorName  | getClient          | winnerId
+      ${'light'} | ${() => clientOne} | ${testUserId}
+      ${'dark'}  | ${() => clientTwo} | ${secondTestUserId}
+    `(
+      'becomes a deciding room with $colorName as the previous winner after $colorName wins',
+      async ({ getClient, winnerId }) => {
+        /* Infeasible to play a whole game of checkers here.
+         As a shortcut there are two development-only endpoints.
+         /room/set-my-turn sets the current turn to the requesting player.
+         /room/prepare-win clears the board except for a king of the requester's
+         color at (0, 0), and one of their opponent's pieces at (1, 1).
+       */
+        const client = getClient();
+        await client.post('/room/set-my-turn').expect(204);
+        await client.post('/room/prepare-win').expect(204);
+        await client
+          .post('/room/move')
+          .send({ from: { row: 0, column: 0 }, to: { row: 2, column: 2 } })
+          .expect(200);
+        await clientOne
+          .get('/room')
+          .expect(200)
+          .expect(({ body }) => {
+            expect(body).toEqual(
+              expect.objectContaining({
+                challenger: expect.objectContaining({
+                  id: testUserId,
+                }),
+                state: {
+                  challengerDecision: null,
+                  name: 'deciding',
+                  opponent: expect.objectContaining({
+                    id: secondTestUserId,
+                  }),
+                  opponentDecision: null,
+                  previousWinnerId: winnerId,
+                },
+              }),
+            );
+          });
+      },
+    );
   });
 });

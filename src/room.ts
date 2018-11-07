@@ -463,7 +463,7 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
 
   res.json({ state } as MoveResponse);
 
-  if (state === 'done') {
+  if (state === 'win') {
     room.state = {
       challengerDecision: null,
       name: 'deciding',
