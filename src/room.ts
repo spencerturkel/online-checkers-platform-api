@@ -5,9 +5,9 @@
  * and play games.
  */
 
-import { MailData } from '@sendgrid/helpers/classes/mail';
 import sgMail from '@sendgrid/mail';
 import { RequestHandler, Router } from 'express';
+import uuid from 'uuid/v4';
 
 import { authenticate } from './auth/middleware';
 import { documents, tableName } from './dynamo';
@@ -48,6 +48,10 @@ interface WaitingState {
    * Whether the waiting user wants to be matched with the public.
    */
   public: boolean;
+  /**
+   * UUID assigned when the challenger invites an opponent.
+   */
+  invitationToken?: string;
   name: 'waiting';
 }
 
@@ -188,7 +192,7 @@ roomRouter.post('/create', async (req, res) => {
 
   const challenger = {
     id: req.userId,
-    name: '', // FIXME:
+    name: req.userName,
     timer: null!, // will set timer once room created
   };
 
@@ -210,11 +214,13 @@ roomRouter.post('/create', async (req, res) => {
 });
 
 /**
- * Join a public room.
+ * Join a room. If a body with a "token" key is present, attempts to join
+ * the room with that invitation token. Otherwise, attempts to
+ * join a public room.
  */
 roomRouter.post('/join', async (req, res) => {
   if (req.room) {
-    if (typeof req.body !== 'object' || !req.body.id) {
+    if (typeof req.body !== 'object') {
       logger.info(
         'User %s attempting to join any game, but is already in a room',
         req.userId,
@@ -228,13 +234,19 @@ roomRouter.post('/join', async (req, res) => {
       req.userId,
     );
     res.sendStatus(400);
+    return;
   }
 
   for (const room of Object.values(roomsByUserId)) {
-    if (room.state.name === 'waiting' && room.state.public) {
+    if (
+      room.state.name === 'waiting' &&
+      (req.body && req.body.token
+        ? room.state.invitationToken === req.body.token
+        : room.state.public)
+    ) {
       const opponent = {
         id: req.userId,
-        name: '', // FIXME:
+        name: req.userName,
         timer: null!,
       };
 
@@ -267,10 +279,10 @@ const requireRoom: RequestHandler = (req, res, next) => {
   }
 };
 
-let email: MailData | null = null;
-
 roomRouter.post('/invite', requireRoom, async (req, res) => {
-  if (req.room!.state.name !== 'waiting') {
+  const room = req.room!;
+
+  if (room.state.name !== 'waiting') {
     logger.info('Attempted to invite from non-waiting room');
     res.sendStatus(400);
     return;
@@ -282,16 +294,17 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
     return;
   }
 
-  const userName = ''; // TODO:
-  const link = ''; // TODO:
-  email = {
+  room.state.invitationToken = uuid();
+
+  const link =
+    'https://onlinecheckersplatform.com/join/' + room.state.invitationToken;
+
+  await sgMail.send({
     to: req.body.email,
     from: 'noreply@onlinecheckersplatform.com',
-    subject: `${userName} invited you to play checkers!`,
-    text: `Click ${link} to play!`,
-  };
-
-  await sgMail.send(email);
+    subject: `${req.userName} invited you to play checkers!`,
+    text: `Go to ${link} to play!`,
+  });
 
   res.sendStatus(204);
 });
@@ -590,9 +603,5 @@ if (!environment.production) {
       req.userId === room.state.game.lightId ? light : dark;
 
     res.sendStatus(204);
-  });
-
-  roomRouter.get('/last-email', (req, res) => {
-    res.json({ email });
   });
 }

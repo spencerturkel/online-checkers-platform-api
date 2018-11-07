@@ -75,6 +75,13 @@ describe('room router', () => {
       await clientOne.post('/room/create');
     });
 
+    afterEach(async () => {
+      await Promise.all([
+        clientOne.post('/room/leave'),
+        clientTwo.post('/room/leave'),
+      ]);
+    });
+
     it('will delete the room after leaving', async () => {
       await clientOne.post('/room/leave').expect(204);
       await clientOne.get('/room').expect(404);
@@ -127,6 +134,45 @@ describe('room router', () => {
     it('may not be joined by anyone if private', async () => {
       await clientOne.post('/room/privatize').expect(204);
       await clientTwo.post('/room/join').expect(404);
+    });
+
+    it('may be joined using the invitation token after inviting', async () => {
+      await clientOne
+        .post('/room/invite')
+        .send({ email: 'bit-bucket@test.smtp.org' })
+        .expect(204);
+
+      const token = await clientOne.get('/room').then(
+        ({
+          body: {
+            state: { invitationToken },
+          },
+        }) => invitationToken,
+      );
+
+      await clientTwo
+        .post('/room/join')
+        .send({ token })
+        .expect(204);
+
+      await clientOne
+        .get('/room')
+        .expect(200)
+        .expect(({ body }) => {
+          expect(body).toEqual(
+            expect.objectContaining({
+              challenger: expect.objectContaining({
+                id: testUserId,
+              }),
+              state: expect.objectContaining({
+                name: 'deciding',
+                opponent: expect.objectContaining({
+                  id: secondTestUserId,
+                }),
+              }),
+            }),
+          );
+        });
     });
 
     it('may be joined by anyone if public', async () => {
