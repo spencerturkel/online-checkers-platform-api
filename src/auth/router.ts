@@ -109,10 +109,16 @@ authRouter.post('/guest', async (req, res) => {
 
   await documents
     .put({
+      ConditionExpression: 'attribute_not_exists(userId)',
       Item: user,
       TableName: tableName,
     })
-    .promise();
+    .promise()
+    .catch(e => {
+      if (e.code !== 'ConditionalCheckFailedException') {
+        throw e;
+      }
+    });
 
   req.session!.isGuest = true;
   req.session!.name = req.body.name;

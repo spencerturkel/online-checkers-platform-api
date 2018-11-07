@@ -17,6 +17,10 @@ describe('auth router', () => {
       .post('/auth/guest')
       .send({ name })
       .expect(201);
+    await test
+      .post('/auth/guest')
+      .send({ name })
+      .expect(201);
     test
       .get('/user')
       .expect(200)
