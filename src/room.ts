@@ -338,11 +338,48 @@ roomRouter.post('/leave', requireRoom, (req, res) => {
 });
 
 roomRouter.get('/', requireRoom, (req, res) => {
-  res.json(req.room);
+  const room = req.room!;
+  res.json({
+    challenger: {
+      id: room.challenger.id,
+      name: room.challenger.name,
+    },
+    state:
+      room.state.name === 'waiting'
+        ? {
+            invitationToken: room.state.invitationToken,
+            name: 'waiting',
+            public: room.state.public,
+          }
+        : room.state.name === 'deciding'
+          ? {
+              challengerDecision: room.state.challengerDecision,
+              name: 'deciding',
+              opponent: {
+                id: room.state.opponent.id,
+                name: room.state.opponent.name,
+              },
+              opponentDecision: room.state.opponentDecision,
+              previousWinnerId: room.state.previousWinnerId,
+            }
+          : {
+              name: 'playing',
+              game: {
+                currentColor: room.state.game.currentColor,
+                board: room.state.game.board,
+                darkId: room.state.game.darkId,
+                lightId: room.state.game.lightId,
+              },
+              opponent: {
+                id: room.state.opponent.id,
+                name: room.state.opponent.name,
+              },
+            },
+  });
 });
 
 roomRouter.head('/', requireRoom, (req, res) => {
-  res.sendStatus(200);
+  res.sendStatus(204);
 });
 
 roomRouter.delete('/decision', requireRoom, (req, res) => {
