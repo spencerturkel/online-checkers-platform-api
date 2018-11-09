@@ -1,4 +1,5 @@
 import { dark, light } from './game';
+import { roomUserTimeout } from './room';
 import { createSuperTest, SuperTest, Test, testUserId } from './supertest';
 
 jest.useFakeTimers();
@@ -59,6 +60,7 @@ describe('room router', () => {
                     name: expect.any(String),
                   }),
                   state: {
+                    invitationToken: expect.any(String),
                     name: 'waiting',
                     public: false,
                   },
@@ -93,12 +95,12 @@ describe('room router', () => {
     });
 
     it('will refresh the timeout after querying', async () => {
-      jest.advanceTimersByTime(30000);
+      jest.advanceTimersByTime(roomUserTimeout);
       await clientOne.get('/room').expect(404);
       await clientOne.post('/room/create').expect(204);
-      jest.advanceTimersByTime(20000);
+      jest.advanceTimersByTime(roomUserTimeout / 2);
       await clientOne.get('/room').expect(200);
-      jest.advanceTimersByTime(20000);
+      jest.advanceTimersByTime(roomUserTimeout / 2);
       await clientOne.get('/room').expect(200);
     });
 
@@ -109,6 +111,7 @@ describe('room router', () => {
         expect(body).toEqual(
           expect.objectContaining({
             state: {
+              invitationToken: expect.any(String),
               name: 'waiting',
               public: false,
             },
@@ -123,6 +126,7 @@ describe('room router', () => {
         expect(body).toEqual(
           expect.objectContaining({
             state: {
+              invitationToken: expect.any(String),
               name: 'waiting',
               public: true,
             },
@@ -142,34 +146,6 @@ describe('room router', () => {
         .send({ email: 'bit-bucket@test.smtp.org' })
         .expect(200);
       await clientTwo.post('/room/join').expect(404);
-    });
-
-    it('may be joined by anyone after deleting the invitation', async () => {
-      await clientOne.post('/room/publish').expect(204);
-      await clientOne
-        .post('/room/invite')
-        .send({ email: 'bit-bucket@test.smtp.org' })
-        .expect(200);
-      await clientOne.delete('/room/invite').expect(204);
-      await clientTwo.post('/room/join/').expect(204);
-      await clientOne
-        .get('/room')
-        .expect(200)
-        .expect(({ body }) => {
-          expect(body).toEqual(
-            expect.objectContaining({
-              challenger: expect.objectContaining({
-                id: testUserId,
-              }),
-              state: expect.objectContaining({
-                name: 'deciding',
-                opponent: expect.objectContaining({
-                  id: secondTestUserId,
-                }),
-              }),
-            }),
-          );
-        });
     });
 
     it('may be joined using the invitation token after inviting', async () => {
@@ -267,6 +243,7 @@ describe('room router', () => {
                   id: testUserId,
                 }),
                 state: {
+                  invitationToken: expect.any(String),
                   public: false,
                   name: 'waiting',
                 },
@@ -287,6 +264,7 @@ describe('room router', () => {
                   id: secondTestUserId,
                 }),
                 state: {
+                  invitationToken: expect.any(String),
                   public: false,
                   name: 'waiting',
                 },
@@ -441,6 +419,7 @@ describe('room router', () => {
                 id: testUserId,
               }),
               state: {
+                invitationToken: expect.any(String),
                 public: false,
                 name: 'waiting',
               },
@@ -461,6 +440,7 @@ describe('room router', () => {
                 id: secondTestUserId,
               }),
               state: {
+                invitationToken: expect.any(String),
                 public: false,
                 name: 'waiting',
               },

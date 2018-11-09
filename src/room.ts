@@ -51,7 +51,7 @@ interface WaitingState {
   /**
    * UUID assigned when the challenger invites an opponent.
    */
-  invitationToken?: string;
+  invitationToken: string;
   name: 'waiting';
 }
 
@@ -104,7 +104,9 @@ const roomsByUserId = {} as { [userId: string]: Room };
  * After this amount of milliseconds passes without interaction by a RoomUser,
  * that RoomUser will be removed from their Room.
  */
-const roomUserTimeout = Number(process.env.ROOM_USER_TIMEOUT) || 30000;
+export const roomUserTimeout =
+  Number(process.env.ROOM_USER_TIMEOUT) ||
+  (environment.production ? 30000 : 3000);
 
 /**
  * Remove a user from a room.
@@ -118,7 +120,7 @@ const removeUser = (room: Room, userId: string): void => {
       logger.info('User %s became challenger', room.challenger.id);
     }
 
-    room.state = { name: 'waiting', public: false };
+    room.state = { invitationToken: uuid(), name: 'waiting', public: false };
   }
 
   delete roomsByUserId[userId];
@@ -172,7 +174,7 @@ roomRouter.post('/create', async (req, res) => {
 
   const room: Room = {
     challenger,
-    state: { name: 'waiting', public: false },
+    state: { invitationToken: uuid(), name: 'waiting', public: false },
   };
 
   roomsByUserId[req.userId] = room;
@@ -250,22 +252,6 @@ const requireRoom: RequestHandler = (req, res, next) => {
   }
 };
 
-roomRouter.delete('/invite', requireRoom, async (req, res) => {
-  const room = req.room!;
-
-  if (room.state.name !== 'waiting') {
-    logger.info('Attempted to delete invitation from non-waiting room');
-    res.sendStatus(400);
-    return;
-  }
-
-  delete room.state.invitationToken;
-
-  res.sendStatus(204);
-
-  logger.info('Deleted invitation from user %s', req.userId);
-});
-
 roomRouter.post('/invite', requireRoom, async (req, res) => {
   const room = req.room!;
 
@@ -275,13 +261,12 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
     return;
   }
 
+  room.state.invitationToken = uuid();
+
   if (!req.body || typeof req.body.email !== 'string') {
-    logger.info('Bad body posted to /invite: %O', req.body);
-    res.sendStatus(400);
+    res.sendStatus(204);
     return;
   }
-
-  room.state.invitationToken = uuid();
 
   const link =
     'https://onlinecheckersplatform.com/join/' + room.state.invitationToken;
