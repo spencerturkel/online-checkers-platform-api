@@ -269,7 +269,7 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
   }
 
   const link =
-    'https://onlinecheckersplatform.com/join/' + room.state.invitationToken;
+    'https://onlinecheckersplatform.com/#/join/' + room.state.invitationToken;
 
   try {
     await sgMail.send({
