@@ -116,8 +116,11 @@ export const roomUserTimeout =
 const removeUser = (room: Room, userId: string): void => {
   if (room.state.name !== 'waiting') {
     if (room.state.opponent.id !== userId) {
+      clearTimeout(room.challenger.timer);
       room.challenger = room.state.opponent;
       logger.info('User %s became challenger', room.challenger.id);
+    } else {
+      clearTimeout(room.state.opponent.timer);
     }
 
     room.state = { invitationToken: uuid(), name: 'waiting', public: false };
