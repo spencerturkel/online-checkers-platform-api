@@ -95,8 +95,9 @@ export class Game {
     }
 
     const opponentColor = this.currentColor === light ? dark : light;
+    const jumped = distance === 2;
 
-    if (distance === 2) {
+    if (jumped) {
       const jumpedRow = move.from.row + rowVector / 2;
       const jumpedColumn = move.from.column + columnVector / 2;
       const jumpedPiece = this.board[jumpedRow][jumpedColumn];
@@ -128,7 +129,7 @@ export class Game {
       return 'win';
     }
 
-    if (!isPromotion && this.canJumpFrom(move.to)) {
+    if (jumped && !isPromotion && this.canJumpFrom(move.to)) {
       this.jumpingFrom = move.to;
       return 'jumping';
     }
@@ -168,7 +169,7 @@ export class Game {
   private canJumpFrom({ row, column }: Coordinate): boolean {
     const origin = this.board[row][column];
 
-    if (!origin) {
+    if (!origin || !origin.startsWith(this.currentColor)) {
       return false;
     }
 

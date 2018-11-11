@@ -366,6 +366,7 @@ describe('jumps', () => {
       Array(8).fill(null),
     ]);
   });
+
   test('dark may jump light', () => {
     game.currentColor = dark;
 
@@ -407,6 +408,92 @@ describe('jumps', () => {
       Array(8).fill(null),
       Array(8).fill(null),
       [null, null, null, dark, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+  });
+
+  test('turn changes after move to jumpable space', () => {
+    game.board = [
+      Array(8).fill(null),
+      [null, dark].concat(Array(6).fill(null)),
+      Array(8).fill(null),
+      [null, null, null, light].concat(Array(4).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 3, column: 3 }, to: { row: 2, column: 2 } }),
+    ).toBe('done');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      [null, dark].concat(Array(6).fill(null)),
+      [null, null, light].concat(Array(5).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+
+    expect(game.currentColor).toBe(dark);
+  });
+
+  test('light not required to jump out of horizontal bounds', () => {
+    game.board = [
+      Array(8).fill(null),
+      [dark].concat(Array(7).fill(null)),
+      [null, light].concat(Array(6).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 2, column: 1 }, to: { row: 1, column: 2 } }),
+    ).toBe('done');
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      [dark, null, light].concat(Array(5).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ]);
+  });
+
+  test('light not required to jump out of vertical bounds', () => {
+    game.board = [
+      [null, dark].concat(Array(6).fill(null)),
+      [null, null, light].concat(Array(5).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+    ];
+
+    expect(
+      game.move({ from: { row: 1, column: 2 }, to: { row: 0, column: 3 } }),
+    ).toBe('promoted');
+
+    expect(game.board).toEqual([
+      [null, dark, null, lightKing].concat(Array(4).fill(null)),
+      Array(8).fill(null),
+      Array(8).fill(null),
       Array(8).fill(null),
       Array(8).fill(null),
       Array(8).fill(null),
