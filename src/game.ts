@@ -129,9 +129,13 @@ export class Game {
       return 'win';
     }
 
-    if (jumped && !isPromotion && this.canJumpFrom(move.to)) {
-      this.jumpingFrom = move.to;
-      return 'jumping';
+    if (jumped) {
+      if (!isPromotion && this.canJumpFrom(move.to)) {
+        this.jumpingFrom = move.to;
+        return 'jumping';
+      }
+
+      this.jumpingFrom = undefined;
     }
 
     this.currentColor = opponentColor;

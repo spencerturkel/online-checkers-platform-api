@@ -741,4 +741,32 @@ describe('jump chaining', () => {
 
     expect(game.currentColor).toEqual(dark);
   });
+
+  test('allows jumping after a chain ends', () => {
+    game = new Game(dark, darkPlayer, lightPlayer, [
+      [dark].concat(Array(7).fill(null)),
+      [null, light].concat(Array(6).fill(null)),
+      Array(8).fill(null),
+      [null, null, null, light].concat(Array(4).fill(null)),
+      Array(8).fill(null),
+      [null, null, null, null, null, light].concat(Array(2).fill(null)),
+      [null, null, null, null, null, null, light, null],
+      Array(8).fill(null),
+    ]);
+
+    game.move({ from: { row: 0, column: 0 }, to: { row: 2, column: 2 } });
+    game.move({ from: { row: 2, column: 2 }, to: { row: 4, column: 4 } });
+    game.move({ from: { row: 5, column: 5 }, to: { row: 3, column: 3 } });
+
+    expect(game.board).toEqual([
+      Array(8).fill(null),
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, null, light, null, null, null, null],
+      Array(8).fill(null),
+      Array(8).fill(null),
+      [null, null, null, null, null, null, light, null],
+      Array(8).fill(null),
+    ]);
+  });
 });
