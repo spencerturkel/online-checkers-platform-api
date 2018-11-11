@@ -64,7 +64,9 @@ if (!('__TEST__' in global)) {
 
   server.use(
     morgan(morganFormat, {
-      skip: (req, res) => res.statusCode >= 400,
+      skip: (req, res) =>
+        (req.method === 'GET' && req.originalUrl.startsWith('/room')) ||
+        res.statusCode >= 400,
       stream: process.stdout,
     }),
   );

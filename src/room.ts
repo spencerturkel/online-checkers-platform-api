@@ -134,12 +134,12 @@ roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
 
   if (req.room == null) {
-    logger.info('No Room for user %s', req.userId);
+    logger.debug('No Room for user %s', req.userId);
     next();
     return;
   }
 
-  logger.info('Found Room for user %s', req.userId);
+  logger.debug('Found Room for user %s', req.userId);
 
   const roomUser =
     req.userId === req.room.challenger.id

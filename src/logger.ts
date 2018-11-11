@@ -1,8 +1,7 @@
 import winston from 'winston';
 import { environment } from './environment';
 
-const level =
-  process.env.LOG_LEVEL || (environment.production ? 'info' : 'debug');
+const level = process.env.LOG_LEVEL || 'info';
 
 // logger configuration taken from Winston pkg recommended settings
 export const logger = winston.createLogger({
