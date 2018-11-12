@@ -5,6 +5,8 @@
 
 import sgMail from '@sendgrid/mail';
 import { RequestHandler, Router } from 'express';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import uuid from 'uuid/v4';
 
 import { authenticate } from './auth/middleware';
@@ -21,8 +23,6 @@ import {
   MoveResponse,
 } from './game';
 import { logger } from './logger';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 export const roomRouter = Router();
 
