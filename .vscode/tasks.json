@@ -13,6 +13,11 @@
     },
     {
       "type": "npm",
+      "label": "Copy Email",
+      "script": "build:email"
+    },
+    {
+      "type": "npm",
       "label": "Test",
       "script": "watch:test:unit",
       "group": {
@@ -27,7 +32,7 @@
     },
     {
       "label": "Develop",
-      "dependsOn": ["Build", "Run"],
+      "dependsOn": ["Copy Email", "Build", "Run"],
       "problemMatcher": [],
       "group": {
         "kind": "build",

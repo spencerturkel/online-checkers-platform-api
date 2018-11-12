@@ -21,6 +21,8 @@ import {
   MoveResponse,
 } from './game';
 import { logger } from './logger';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export const roomRouter = Router();
 
@@ -256,6 +258,10 @@ const requireRoom: RequestHandler = (req, res, next) => {
   }
 };
 
+const email = readFileSync(join(__dirname, 'email_template.html'), {
+  encoding: 'utf-8',
+});
+
 /**
  * Generates a new invitation link, and emails an invitation if
  * an email address is provided.
@@ -277,7 +283,11 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
   }
 
   const link =
-    'https://onlinecheckersplatform.com/#/join/' + room.state.invitationToken;
+    (environment.production
+      ? 'https://onlinecheckersplatform.com'
+      : 'http://localhost:8080') +
+    '/#/join/' +
+    room.state.invitationToken;
 
   try {
     await sgMail.send({
@@ -285,6 +295,7 @@ roomRouter.post('/invite', requireRoom, async (req, res) => {
       from: 'noreply@onlinecheckersplatform.com',
       subject: `${req.userName} invited you to play checkers!`,
       text: `Go to ${link} to play!`,
+      html: email.replace(/\$LINK/g, link).replace(/\$NAME/g, req.userName),
     });
     res.json({ emailSent: true });
   } catch (e) {
