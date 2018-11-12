@@ -1,6 +1,4 @@
 /**
- * This module defines the Express Router for rooms.
- *
  * Rooms are where users wait for opponents, decide on who will be first,
  * and play games.
  */

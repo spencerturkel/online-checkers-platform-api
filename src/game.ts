@@ -1,3 +1,7 @@
+/**
+ * This module defines the Game class and associated types.
+ */
+
 export interface Coordinate {
   row: number;
   column: number;
@@ -51,6 +55,10 @@ export class Game {
     }
   }
 
+  /**
+   * Moves a piece and returns a State indicator,
+   * or null if the move was invalid.
+   */
   move(move: MoveRequest): State | null {
     if (
       this.jumpingFrom &&

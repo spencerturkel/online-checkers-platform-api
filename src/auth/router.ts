@@ -1,3 +1,7 @@
+/**
+ * Endpoints relating to authentication.
+ */
+
 import { Router } from 'express';
 import uuid from 'uuid/v4';
 
@@ -14,6 +18,9 @@ const googleAuthVerifier = new GoogleAuthVerifier(
 );
 
 if (!environment.production) {
+  /**
+   * Authenticate using an arbitrary user ID.
+   */
   authRouter.post('/local', async (req, res) => {
     if (req.session!.userId) {
       res.sendStatus(204);
@@ -53,6 +60,9 @@ if (!environment.production) {
   });
 }
 
+/**
+ * Authenticate using a Google OAuth token.
+ */
 authRouter.post('/google', async (req, res) => {
   if (typeof req.body.token !== 'string') {
     return res.sendStatus(400);
@@ -92,6 +102,9 @@ authRouter.post('/google', async (req, res) => {
   res.sendStatus(201);
 });
 
+/**
+ * Authenticate as a guest.
+ */
 authRouter.post('/guest', async (req, res) => {
   if (typeof req.body.name !== 'string') {
     res.sendStatus(400);
@@ -127,6 +140,9 @@ authRouter.post('/guest', async (req, res) => {
   res.sendStatus(201);
 });
 
+/**
+ * Delete the requesting session.
+ */
 authRouter.delete('/', authenticate, (req, res, next) => {
   if (req.session!.isGuest) {
     documents

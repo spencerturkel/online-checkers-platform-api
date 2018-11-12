@@ -1,6 +1,9 @@
 import { OAuth2Client } from 'google-auth-library';
 import { TokenPayload } from 'google-auth-library/build/src/auth/loginticket';
 
+/**
+ * Verifies Google OAuth2 tokens.
+ */
 export class GoogleAuthVerifier {
   private readonly oauthClient: OAuth2Client;
 

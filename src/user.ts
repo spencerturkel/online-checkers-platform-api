@@ -1,4 +1,4 @@
-import { Request, Router } from 'express';
+import { Router } from 'express';
 import Stripe from 'stripe';
 
 import { authenticate } from './auth/middleware';
@@ -17,6 +17,9 @@ export const userRouter = Router();
 
 userRouter.use(authenticate);
 
+/**
+ * Get the user item from Dynamo.
+ */
 userRouter.get('/', async (req, res) => {
   res.json(
     (await documents
@@ -27,6 +30,9 @@ userRouter.get('/', async (req, res) => {
 
 const stripe = new Stripe(process.env.STRIPE_KEY!);
 
+/**
+ * Upgrades the user account to premium, after charging the user with Stripe.
+ */
 userRouter.post('/upgrade', async (req, res) => {
   if (
     !req.body ||
@@ -78,6 +84,9 @@ userRouter.post('/upgrade', async (req, res) => {
 });
 
 if (!environment.production) {
+  /**
+   * Removes the premium upgrade from the user.
+   */
   userRouter.delete('/upgrade', async (req, res) => {
     await documents
       .update({

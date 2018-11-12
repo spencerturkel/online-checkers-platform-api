@@ -10,6 +10,10 @@ declare global {
   }
 }
 
+/**
+ * Require that the request is authenticated.
+ * Attaches the user ID and name to the request object.
+ */
 export const authenticate = (
   req: Request,
   res: Response,

@@ -1,3 +1,7 @@
+/**
+ * This module exports the configured Express server.
+ */
+
 import sgMail from '@sendgrid/mail';
 import cors from 'cors';
 import express from 'express';
@@ -16,7 +20,7 @@ sgMail.setApiKey(process.env.SENDGRID_KEY!);
 
 const server = express();
 
-server.set('etag', false);
+server.set('etag', false); // disables ETag caching
 
 if (runningInProduction) {
   server.set('trust proxy', 1); // trusts the NGINX proxy on Elastic Beanstalk
@@ -32,9 +36,9 @@ server.use(
     ],
   }),
 );
-server.use(helmet());
-server.use(helmet.noCache());
-server.use(express.json());
+server.use(helmet()); // adds standard security headers
+server.use(helmet.noCache()); // disables HTTP caching
+server.use(express.json()); // parse JSON request bodies
 
 server.use(
   session({
@@ -43,7 +47,7 @@ server.use(
         15 /* minutes */ *
         60 /* seconds per minute */ *
         1000 /* milliseconds per second */,
-      secure: runningInProduction,
+      secure: runningInProduction, // no HTTPS in development
     },
     name: 'id',
     resave: false,
@@ -55,6 +59,7 @@ server.use(
 const morganFormat = environment.production ? 'combined' : 'dev';
 
 if (!('__TEST__' in global)) {
+  // no request logging in tests
   server.use(
     morgan(morganFormat, {
       skip: (req, res) => res.statusCode < 400,
