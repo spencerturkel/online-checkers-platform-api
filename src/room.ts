@@ -130,6 +130,9 @@ const removeUser = (room: Room, userId: string): void => {
   logger.info('Removed user %s from room', userId);
 };
 
+/**
+ * Finds the requester's room and attaches it to req.room.
+ */
 roomRouter.use((req, res, next) => {
   req.room = roomsByUserId[req.userId];
 
@@ -255,6 +258,10 @@ const requireRoom: RequestHandler = (req, res, next) => {
   }
 };
 
+/**
+ * Generates a new invitation link, and emails an invitation if
+ * an email address is provided.
+ */
 roomRouter.post('/invite', requireRoom, async (req, res) => {
   const room = req.room!;
 
@@ -325,6 +332,9 @@ roomRouter.post('/leave', requireRoom, (req, res) => {
   res.sendStatus(204);
 });
 
+/**
+ * Returns public fields of the room.
+ */
 roomRouter.get('/', requireRoom, (req, res) => {
   const room = req.room!;
   res.json({
@@ -366,10 +376,16 @@ roomRouter.get('/', requireRoom, (req, res) => {
   });
 });
 
+/**
+ * Returns 204 if the user has a room.
+ */
 roomRouter.head('/', requireRoom, (req, res) => {
   res.sendStatus(204);
 });
 
+/**
+ * Deletes the user's current decision on who will go first.
+ */
 roomRouter.delete('/decision', requireRoom, (req, res) => {
   const room = req.room!;
 
@@ -391,6 +407,10 @@ roomRouter.delete('/decision', requireRoom, (req, res) => {
   res.sendStatus(204);
 });
 
+/**
+ * Sets the user's decision on who will go first.
+ * If both decisions agree, starts the game.
+ */
 roomRouter.post('/decision', requireRoom, (req, res) => {
   const room = req.room!;
 
@@ -482,6 +502,10 @@ const validateMoveRequest = (body: any): MoveRequest | null => {
   return { from, to };
 };
 
+/**
+ * Moves a game piece.
+ * If the game ends, resets the room state back to waiting.
+ */
 roomRouter.post('/move', requireRoom, async (req, res) => {
   const room = req.room!;
 
@@ -571,6 +595,9 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
 });
 
 if (!environment.production) {
+  /**
+   * Development endpoint to test winning.
+   */
   roomRouter.post('/prepare-win', requireRoom, (req, res) => {
     const room = req.room!;
 
@@ -613,6 +640,9 @@ if (!environment.production) {
     res.sendStatus(204);
   });
 
+  /**
+   * Development endpoint to set the current player.
+   */
   roomRouter.post('/set-my-turn', requireRoom, (req, res) => {
     const room = req.room!;
 
