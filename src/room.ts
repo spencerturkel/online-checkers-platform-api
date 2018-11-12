@@ -518,7 +518,7 @@ roomRouter.post('/move', requireRoom, async (req, res) => {
   const state = game.move(moveRequest);
 
   if (!state) {
-    res.send(400);
+    res.sendStatus(400);
     return;
   }
 
