@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "npm run build:email; tsc",
-    "build:email": "shx mkdir dist; shx cp src/email_template.html dist/email_template.html",
+    "build:email": "shx mkdir -p dist && shx cp src/email_template.html dist/email_template.html",
     "debug:node": "nodemon --inspect dist/index.js",
-    "develop": "npm run build:email; concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" npm:watch:ts npm:watch:test:unit npm:debug:node",
+    "develop": "npm run build:email && concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" npm:watch:ts npm:watch:test:unit npm:debug:node",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test:unit": "jest",
     "watch:node": "nodemon dist/index.js",
